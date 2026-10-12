@@ -130,8 +130,9 @@ class LocalMarioController(DirectObject):
         if walk is not None:
             builtins.base.cTrav.removeCollider(walk.cEventSphereNodePath)
         if toon is not None and not toon.isEmpty() and toon.avatarControlsEnabled:
-            toon.controlManager.enable()
+            # GravityWalker asserts collisions are active before controls are enabled: same order as Walk.enter
             toon.controlManager.collisionsOn()
+            toon.controlManager.enable()
             toon.startGlitchKiller()
 
     def __getWalkControls(self):

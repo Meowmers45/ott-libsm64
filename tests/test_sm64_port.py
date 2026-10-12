@@ -3,6 +3,7 @@ Run from the repo root:  python3 tests/test_sm64_port.py
 """
 import os
 import sys
+import math
 import subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,6 +48,16 @@ mat = SM64Globals.makeConversionMat(origin)
 viaMat = mat.xformPoint(Point3(x, y, z))
 assert (viaMat - p).length() < 1e-4, viaMat
 assert abs(SM64Globals.faceAngleToHeading(SM64Globals.headingToFaceAngle(37.0)) - 37.0) < 1e-6
+# heading mapping must agree with SM64 movement: Mario travels along (sin yaw, cos yaw) in SM64 (x, z)
+for yawDeg in (0, 45, 90, 135, 180, 225, 270, 315, 17.5):
+    yaw = math.radians(yawDeg)
+    smDir = (math.sin(yaw), 0.0, math.cos(yaw))
+    pandaDir = Point3(smDir[0], -smDir[2], smDir[1])
+    probe = base.render.attachNewNode('headingProbe')
+    probe.setH(SM64Globals.faceAngleToHeading(yaw))
+    forward = probe.getQuat().getForward()
+    assert (forward - pandaDir).length() < 1e-5, (yawDeg, forward, pandaDir)
+    probe.removeNode()
 
 # build a fake level: a floor quad with the Toontown floor mask + an intangible trigger (must be skipped)
 floor = base.render.attachNewNode(CollisionNode('floor'))
@@ -115,7 +126,6 @@ manager._SM64Manager__updateDynamicObjects()
 assert abs(lib.stub_object_pos_x(dyn.objectId) - 25 * SM64Globals.SCALE) < 1e-3
 
 # smooth rotation: rotating the prop streams euler angles instead of rebuilding the object
-import math
 import random
 from panda3d.core import Vec3
 from libsm64.SM64Manager import sm64EulerFromHpr

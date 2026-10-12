@@ -9,7 +9,9 @@ class ToontownLoadingScreen:
     def __init__(self):
         self.__expectedCount = 0
         self.__count = 0
-        self.gui = loader.loadModel('phase_3/models/gui/progress-background')
+        self.gui = NodePath('loadingScreen')
+        self.background = loader.loadModel('phase_3/models/gui/progress-background')
+        self.background.reparentTo(self.gui)
         self.banner = loader.loadModel('phase_3/models/gui/toon_council').find('**/scroll')
         self.banner.reparentTo(self.gui)
         self.banner.setScale(0.4, 0.4, 0.4)
@@ -26,7 +28,17 @@ class ToontownLoadingScreen:
         self.title.destroy()
         self.waitBar.destroy()
         self.banner.removeNode()
+        self.background.removeNode()
         self.gui.removeNode()
+
+    def fitBackground(self):
+        # the art is drawn for 4:3; scale it up uniformly so it covers wider (or taller) windows
+        aspect = base.getAspectRatio()
+        if aspect <= 0:
+            return
+        designAspect = 4.0 / 3.0
+        cover = max(aspect / designAspect, designAspect / aspect, 1.0)
+        self.background.setScale(cover)
 
     def getTip(self, tipCategory):
         return TTLocalizer.TipTitle + '\n' + random.choice(TTLocalizer.TipDict.get(tipCategory))
@@ -37,6 +49,7 @@ class ToontownLoadingScreen:
         self.tip['text'] = self.getTip(tipCategory)
         self.__count = 0
         self.__expectedCount = range
+        self.fitBackground()
         if gui:
             self.waitBar.reparentTo(self.gui)
             self.title.reparentTo(self.gui)

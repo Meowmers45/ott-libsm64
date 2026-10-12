@@ -61,9 +61,9 @@ def makeConversionMat(origin):
 
 
 def faceAngleToHeading(faceAngle):
-    # SM64 yaw 0 faces +Z (panda -Y); yaw increases toward +X
-    return 180.0 - math.degrees(faceAngle)
+    # SM64 moves along (sin yaw, cos yaw) in (x, z); in panda that is (sin yaw, -cos yaw) == heading 180 + yaw
+    return 180.0 + math.degrees(faceAngle)
 
 
 def headingToFaceAngle(heading):
-    return math.radians(180.0 - heading)
+    return math.radians(heading - 180.0)
