@@ -68,4 +68,17 @@ base.camLens.setAspectRatio(aspect[0])
 run(None)
 assert abs(laff.getX() + 1.0) < 1e-5 and abs(book.getX() - 1.2) < 1e-5
 assert abs(base.camLens.getFov()[0] - 80) < 1e-2, base.camLens.getFov()
+# a row of minigame score panels (x = 0.75 - 0.4*k) spreads proportionally across the wide window
+aspect[0] = 16.0 / 9.0
+base.camLens.setAspectRatio(aspect[0])
+panels = []
+for k in range(4):
+    p = base.aspect2d.attachNewNode('scorePanel%d' % k)
+    p.setPos(0.75 - 0.4 * (3 - k), 0, 0.85)
+    panels.append(p)
+run(None)
+f = (16.0 / 9.0) / DESIGN_ASPECT
+for k, p in enumerate(panels):
+    assert abs(p.getX() - (0.75 - 0.4 * (3 - k)) * f) < 1e-5, (k, p.getX())
+assert abs((panels[3].getX() - panels[0].getX()) - 1.2 * f) < 1e-5  # spacing grew with the window
 print('HUD ASPECT CHECKS PASSED')
