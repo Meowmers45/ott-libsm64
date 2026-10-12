@@ -65,6 +65,15 @@ source in /app so the player can switch between Mario and their Toon.
 - Camera: smart camera paused during Mario control; camera pinned at (0,-12,5) relative to toon looking at Mario's
   head (prc sm64-camera-distance / sm64-camera-height); restored on release
 
+## Iteration 8 (June 2026)
+- Fixed inverted stick: camLook now cam - mario (SM64 camera->yaw is the Mario->camera direction)
+- Shtiker Book / Options blocked while marioMode (PublicWalk handlers) with a system message
+- Cog disguise: LocalToon.setCogIndex override ends Mario Mode; toggleMarioMode refuses while isDisguised
+- Removed fixed `aspect-ratio 1.333333` from Configrc.prc so Panda derives aspect from the window size
+
+## Iteration 9 (June 2026)
+- No sleeping while Mario: controller sets toon.noSleep=1 on grab (restored on release) and wakes the toon on input
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
