@@ -26,3 +26,10 @@ libsm64/*.dll
 libsm64/*.dylib
 libsm64/libsm64-src/
 tests/sm64_stub_build/
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
