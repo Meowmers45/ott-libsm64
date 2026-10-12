@@ -12,7 +12,7 @@ aux-display tinydisplay
 depth-bits 24
 audio-sfx-active #t
 audio-music-active #t
-aspect-ratio 1.333333
+# aspect ratio follows the window size (no fixed aspect-ratio)
 
 # Models/Resources
 model-path resources

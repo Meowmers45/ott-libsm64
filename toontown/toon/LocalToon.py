@@ -288,6 +288,8 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if self.marioMode:
             self.b_setMarioMode(0)
             return "Welcome back, Toon!"
+        if self.isDisguised:
+            return "Mario can't wear a Cog disguise. Take it off first."
         if not manager.isAvailable():
             return manager.getMissingMessage()
         if not manager.ensureInit():
@@ -312,6 +314,12 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if not self.isMario():
             return 'Switch to Mario first (~mario) before choosing a cap.'
         return self.mario.giveCap(capName)
+
+    def setCogIndex(self, index):
+        DistributedToon.DistributedToon.setCogIndex(self, index)
+        if index != -1 and self.marioMode:
+            self.b_setMarioMode(0)
+            self.setSystemMessage(0, 'Spellbook: Mario Mode ended - Mario does not wear Cog disguises!', WhisperPopup.WTSystem)
 
     def acceptMarioHotkey(self):
         if MarioToggleKey:

@@ -109,9 +109,10 @@ class SM64Mario(NodePath):
         self.inputs.buttonZ = int(bool(buttonZ))
 
     def setCameraPos(self, camPandaPos):
+        # libsm64 wants the camera -> Mario look direction; in our Z-up/Y-up mapping this is cam - mario
         cx, cy, cz = self.manager.toSM64(camPandaPos)
-        self.inputs.camLookX = self.state.position[0] - cx
-        self.inputs.camLookZ = self.state.position[2] - cz
+        self.inputs.camLookX = cx - self.state.position[0]
+        self.inputs.camLookZ = cz - self.state.position[2]
 
     # Remote control: Mario follows a node and mimics the networked state
     def setFollowNode(self, node):

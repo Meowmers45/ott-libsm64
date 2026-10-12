@@ -1,4 +1,5 @@
 from panda3d.core import *
+from panda3d.otp import WhisperPopup
 from toontown.toonbase.ToontownGlobals import *
 from direct.directnotify import DirectNotifyGlobal
 from . import Walk
@@ -36,6 +37,9 @@ class PublicWalk(Walk.Walk):
         base.localAvatar.endAllowPies()
 
     def __handleStickerBookEntry(self):
+        if base.localAvatar.marioMode:
+            base.localAvatar.setSystemMessage(0, 'Spellbook: Switch back to your Toon (~mario) to open the Shtiker Book.', WhisperPopup.WTSystem)
+            return
         currentState = base.localAvatar.animFSM.getCurrentState().getName()
         if currentState == 'jumpAirborne':
             return
@@ -48,6 +52,9 @@ class PublicWalk(Walk.Walk):
             return
 
     def __handleOptionsEntry(self):
+        if base.localAvatar.marioMode:
+            base.localAvatar.setSystemMessage(0, 'Spellbook: Switch back to your Toon (~mario) to open the Shtiker Book.', WhisperPopup.WTSystem)
+            return
         currentState = base.localAvatar.animFSM.getCurrentState().getName()
         if currentState == 'jumpAirborne':
             return

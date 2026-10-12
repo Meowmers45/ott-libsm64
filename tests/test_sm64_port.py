@@ -73,7 +73,7 @@ assert mario.isValid()
 assert len(manager.marios) == 1 and base.taskMgr.hasTaskNamed(SM64Manager.SM64Manager.TaskName)
 mario.setControllerInput(1, 0, True, False, False)
 mario.setCameraPos(Point3(0, -10, 4))
-assert mario.inputs.camLookZ < 0  # camera is behind (-Y panda == +Z sm64)
+assert mario.inputs.camLookZ > 0  # camera behind Mario (-Y panda == +Z sm64): look vector cam->mario points +Z
 mario.tick()
 assert mario.state.action == 0x03000880
 pos = mario.getPandaPos()
