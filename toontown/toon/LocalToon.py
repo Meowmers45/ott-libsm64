@@ -330,6 +330,8 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if self.marioMode or self.isDisguised or not self.avatarControlsEnabled:
             return
         self.b_setMarioMode(1)
+        if self.marioMode:
+            self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioBack, WhisperPopup.WTSystem)
 
     def giveMarioCap(self, capName):
         if not self.isMario():

@@ -91,6 +91,10 @@ class SM64Mario(NodePath):
     def getHeading(self):
         return SM64Globals.faceAngleToHeading(self.state.faceAngle)
 
+    def isAttacking(self):
+        # punches, kicks, dives, slide kicks and ground pounds all carry SM64's ACT_FLAG_ATTACKING
+        return bool(self.state.action & SM64Bindings.ACT_FLAG_ATTACKING)
+
     def warpTo(self, pandaPos, resetVelocity=True):
         x, y, z = self.manager.toSM64(pandaPos)
         self.lib.sm64_set_mario_position(self.marioId, x, y, z)

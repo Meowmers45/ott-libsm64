@@ -409,6 +409,9 @@ class DistributedSuit(DistributedSuitBase.DistributedSuitBase, DelayDeletable):
     def __handleToonCollision(self, collEntry):
         if not base.localAvatar.wantBattles:
             return
+        if base.localAvatar.isMario() and not base.localAvatar.mario.isAttacking():
+            # Mario only picks a fight when he lands a hit: plain bumps let him dodge the Cog
+            return
         toonId = base.localAvatar.getDoId()
         self.notify.debug('Distributed suit: requesting a Battle with ' + 'toon: %d' % toonId)
         self.d_requestBattle(self.getPos(), self.getHpr())

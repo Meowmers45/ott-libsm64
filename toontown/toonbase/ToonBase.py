@@ -334,8 +334,24 @@ class ToonBase(OTPBase.OTPBase):
                 if url != serverURL:
                     serverList.append(url)
 
+        if not self.checkSM64Available():
+            return
         cr.loginFSM.request('connect', [serverList])
         self.ttAccess = ToontownAccess.ToontownAccess()
+
+    def checkSM64Available(self):
+        # Mario Mode is part of this build: without libsm64 + ROM other players' Marios can't be shown, so
+        # refuse to enter the game and tell the player what is missing (prc `sm64-required 0` to bypass)
+        from libsm64 import SM64Manager
+        if not ConfigVariableBool('sm64-required', True).value or SM64Manager.get().isAvailable():
+            return True
+        from toontown.toontowngui import TTDialog
+        message = TTLocalizer.SM64MissingDialog % SM64Manager.get().getMissingParts()
+        self.sm64MissingDialog = TTDialog.TTGlobalDialog(message=message, doneEvent='sm64MissingAck',
+                                                         style=TTDialog.Acknowledge, text_wordwrap=22)
+        self.sm64MissingDialog.show()
+        self.acceptOnce('sm64MissingAck', self.exitShow)
+        return False
 
     def removeGlitchMessage(self):
         self.ignore('InputState-forward')

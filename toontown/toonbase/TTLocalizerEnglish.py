@@ -9758,3 +9758,7 @@ InteractivePropTrackBonusTerms = {0: 'Super Toon-Up!',
  5: 'Super Squirt!',
  6: ''}
 PlayingCardUnknown = 'Card Name is unknown'
+
+# Mario Mode (libsm64)
+SM64MissingDialog = "Mario Mode needs libsm64 to show other players' Marios, but this client is missing the %s.\n\nRun libsm64/build_libsm64.sh and copy your sm64.z64 ROM into libsm64/, then start Toontown again."
+SM64MarioBack = "It's-a me! Mario's back."

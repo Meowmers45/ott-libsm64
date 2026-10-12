@@ -110,7 +110,12 @@ client simulates them.
 * Whenever Toontown needs your Toon - opening the Shtiker Book, teleporting, tunnels, doors, elevators,
   talking to NPCs, Cog battles - Mario is parked and your Toon takes over; Mario comes back automatically
   as soon as you are walking again (unless you toggled `~mario` off yourself in between).
+* Street Cogs only start a battle when Mario actually hits them (punch, kick, dive, slide kick, ground
+  pound - any SM64 attacking action); plain bumps and Cogs walking into Mario do nothing, so he can dodge.
+  Mario is parked for the battle and returns ("It's-a me! Mario's back.") once you are walking again.
 * Putting on a Cog disguise ends Mario Mode, and you can't enter Mario Mode while disguised.
+* The client refuses to connect without libsm64 + ROM (a dialog lists what is missing), because other
+  players' Marios could not be shown otherwise. Set `sm64-required 0` in the prc to bypass this check.
 * Water is ignored by default (Mario treats ponds as ordinary floor); set `sm64-water 1` to turn
   Toontown water into SM64 water he can swim in.
 * Your Toon sleeps exactly when Mario takes his SM64 idle nap, and wakes up when he does; the

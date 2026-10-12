@@ -171,13 +171,16 @@ class SM64Manager(DirectObject):
     def isAvailable(self):
         return os.path.isfile(self.libPath) and os.path.isfile(self.romPath)
 
-    def getMissingMessage(self):
+    def getMissingParts(self):
         missing = []
         if not os.path.isfile(self.libPath):
             missing.append('library "%s"' % self.libPath)
         if not os.path.isfile(self.romPath):
             missing.append('ROM "%s"' % self.romPath)
-        return 'libsm64 is not set up: missing %s. See libsm64/README.md.' % ' and '.join(missing)
+        return ' and '.join(missing)
+
+    def getMissingMessage(self):
+        return 'libsm64 is not set up: missing %s. See libsm64/README.md.' % self.getMissingParts()
 
     def ensureInit(self):
         if self.initialized:

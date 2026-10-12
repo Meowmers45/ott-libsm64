@@ -118,6 +118,17 @@ assert len(net) == 12 and net[10] == 1
 
 # caps
 assert 'Unknown cap' in mario.giveCap('propeller')
+# Mario only starts a street Cog battle while an attacking action is running (ACT_FLAG_ATTACKING)
+savedAction = mario.state.action
+for act in (SM64Bindings.ACT_PUNCHING, SM64Bindings.ACT_GROUND_POUND, 0x0188088A):  # punch, ground pound, dive
+    mario.state.action = act
+    assert mario.isAttacking(), hex(act)
+for act in (SM64Bindings.ACT_IDLE, 0x04000440, 0x03000880):  # idle, walking, jump
+    mario.state.action = act
+    assert not mario.isAttacking(), hex(act)
+mario.state.action = savedAction
+# startup check text pieces
+assert manager.isAvailable() and manager.getMissingParts() == ''
 mario.giveCap('wing')
 mario.tick()
 assert mario.state.flags & SM64Bindings.MARIO_WING_CAP
