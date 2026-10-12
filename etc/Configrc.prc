@@ -108,7 +108,6 @@ sm64-lib-dir libsm64
 sm64-rom-path libsm64/sm64.z64
 sm64-scale 50
 sm64-collision-radius 400
-sm64-toggle-key m
 sm64-camera-distance 12
 sm64-camera-height 5
 sm64-camera-follow-rate 10

@@ -38,7 +38,7 @@ from toontown.shtiker import TIPPage
 from toontown.quest import Quests
 from toontown.quest import QuestParser
 from toontown.toonbase.ToontownGlobals import *
-from libsm64.SM64Globals import headingToFaceAngle, TOGGLE_KEY as MarioToggleKey
+from libsm64.SM64Globals import headingToFaceAngle
 from toontown.toonbase import ToontownGlobals
 from toontown.toonbase import TTLocalizer
 from toontown.catalog import CatalogNotifyDialog
@@ -242,7 +242,6 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if base.wantNametags:
             self.nametag.manage(base.marginManager)
         DistributedToon.DistributedToon.announceGenerate(self)
-        self.acceptMarioHotkey()
         from otp.friends import FriendInfo
 
     def disable(self):
@@ -347,12 +346,8 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if index != -1:
             self.hideMarioButton()
 
-    def acceptMarioHotkey(self):
-        if MarioToggleKey:
-            self.accept(MarioToggleKey, self.requestMarioToggle)
-
     def requestMarioToggle(self):
-        # Shared by the hotkey and the on-screen button
+        # On-screen Mario/Toon button (the `~mario` magic word is the other way in)
         chatMgr = getattr(self, 'chatMgr', None)
         if chatMgr is not None and hasattr(chatMgr, 'fsm') and chatMgr.fsm.getCurrentState().getName() != 'mainMenu':
             return

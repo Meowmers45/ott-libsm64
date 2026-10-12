@@ -37,7 +37,7 @@ source in /app so the player can switch between Mario and their Toon.
 - Caps: `~mario wing|metal|vanish|normal` -> sm64_mario_interact_cap / sm64_set_mario_state; flags networked (setMarioState now 12 fields)
 - Moving platforms: DynamicSurfaceObject in SM64Manager (name patterns `sm64-dynamic-node-patterns` + motion-promoted static nodes), updated every tick via sm64_surface_object_move
 - Sound: sm64_audio_init/tick -> UserDataAudio stream on sfxManagerList[0]; prc `sm64-audio`, `sm64-sfx-volume`
-- Hotkey: `sm64-toggle-key` (default `m`) accepted in LocalToon.announceGenerate
+- Hotkey: `sm64-toggle-key` (default `m`) accepted in LocalToon.announceGenerate (REMOVED in iteration 18)
 - tests/test_sm64_port.py extended; testing agent iteration_2: no issues
 
 ## Iteration 3 (June 2026)
@@ -125,7 +125,11 @@ source in /app so the player can switch between Mario and their Toon.
   (SM64Manager.getMissingParts) and exits on OK instead of connecting; replaces the remote-Mario placeholder idea
 - testing agent iteration_7 green
 - Mario/Toon switch button (LocalToon.createMarioButton, quit_button gui, pos (-0.98,0,-0.92) next to the laff meter;
-  red "Mario" / blue "Toon", shown by PublicWalk enter, hidden on exit/disguise; shares requestMarioToggle with the hotkey)
+  red "Mario" / blue "Toon", shown by PublicWalk enter, hidden on exit/disguise; requestMarioToggle)
+
+## Iteration 18 (June 2026)
+- Removed the `M` toggle hotkey (`sm64-toggle-key`, SM64Globals.TOGGLE_KEY, LocalToon.acceptMarioHotkey); Mario is
+  entered via the on-screen button or `~mario` only
 
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)

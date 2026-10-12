@@ -44,7 +44,6 @@ for the duration and restored when you switch back.
 | `Delete`       | B (punch/dive)|
 | `C`            | Z (crouch)    |
 | `T`            | Open the chat box (typing no longer opens it while Mario is in play) |
-| `M`            | Toggle Mario / Toon (hotkey, `sm64-toggle-key`) |
 
 While Mario is in play Toontown's smart camera is paused and the camera stays behind Mario's
 head (`sm64-camera-distance` / `sm64-camera-height`), easing onto his new facing at
