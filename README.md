@@ -51,3 +51,7 @@ How you commit changes is your choice, but please include what you did and a bas
 * `minigames: Fix crash when entering the trolley`
 * `racing: Fix possible race condition when two racers tied`
 * `golf: Refix wonky physics once and for all (hopefully)`
+
+# Window aspect ratio
+The window is no longer locked to 4:3: the view, field of view and HUD adapt to the window size
+(`toontown/toonbase/HudAspectAdjuster.py`, toggle with `hud-aspect-adjust` in `etc/Configrc.prc`).

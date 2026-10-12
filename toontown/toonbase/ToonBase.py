@@ -57,6 +57,10 @@ class ToonBase(OTPBase.OTPBase):
         camera.setPosHpr(0, 0, 0, 0, 0, 0)
         self.camLens.setFov(ToontownGlobals.DefaultCameraFov)
         self.camLens.setNearFar(ToontownGlobals.DefaultCameraNear, ToontownGlobals.DefaultCameraFar)
+        from toontown.toonbase.HudAspectAdjuster import HudAspectAdjuster
+        self.hudAspectAdjuster = None
+        if ConfigVariableBool('hud-aspect-adjust', 1).value:
+            self.hudAspectAdjuster = HudAspectAdjuster(self)
         self.musicManager.setVolume(0.65)
         self.setBackgroundColor(ToontownGlobals.DefaultBackgroundColor)
         tpm = TextPropertiesManager.getGlobalPtr()

@@ -74,6 +74,13 @@ source in /app so the player can switch between Mario and their Toon.
 ## Iteration 9 (June 2026)
 - Sleep: toon.forceGotoSleep() when Mario action is ACT_START_SLEEPING/ACT_SLEEPING; otherwise lastMoved refreshed and wakeUp() if asleep
 
+## Iteration 10 (June 2026)
+- Snore bubbles: Toon Sleep state (forced when Mario naps) already shows the "zzz" CFThought bubble on the nametag
+  that follows Mario; documented, no extra code
+- toontown/toonbase/HudAspectAdjuster.py (started from ToonBase, prc `hud-aspect-adjust`): per-frame task scales x of
+  aspect2d children by aspect/(4/3) (tracks design positions, handles new/moved nodes) and converts camLens.setFov(h)
+  (4:3 design) into setMinFov(vertical) so the horizontal FOV widens with the window; tests/test_hud_aspect.py
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
