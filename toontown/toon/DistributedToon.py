@@ -952,6 +952,8 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         extraArgs = []
         extraArgs.insert(0, animIndex)
         self.doEmote(animIndex, animMultiplier, ts, callback, extraArgs)
+        if self.mario is not None and self.mario.isValid():
+            self.mario.playEmote(animIndex)
         return
 
     def setCogStatus(self, cogStatusList):

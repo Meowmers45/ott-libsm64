@@ -42,6 +42,7 @@ class SM64Mario(NodePath):
         self.followNode = None
         self.inWater = False
         self.lastWaterLevel = SM64Globals.NO_WATER_LEVEL
+        self.emoteEndTick = None
 
         self.geomNode = GeomNode('mario')
         NodePath.__init__(self, self.geomNode)
@@ -139,6 +140,41 @@ class SM64Mario(NodePath):
                 float(s.velocity[0]), float(s.velocity[1]), float(s.velocity[2]),
                 float(self.inputs.stickX), float(self.inputs.stickY), buttons, int(s.flags))
 
+    # Emotes: Toontown emote index -> SM64 animation played on an action that doesn't override it
+    EmoteAnims = {0: 29, 1: 39, 2: 25, 3: 32, 5: 14, 6: 37, 7: 30, 8: 27, 9: 39, 10: 48, 11: 30, 12: 44,
+                  13: 34, 14: 1, 15: 32, 16: 39, 17: 39, 18: 14, 19: 39, 20: 1, 21: 25, 22: 37, 23: 32, 24: 39}
+    EmoteSleepIndex = 4
+    EmoteTicks = 75
+
+    def playEmote(self, emoteIndex):
+        if self.marioId < 0:
+            return
+        if emoteIndex == self.EmoteSleepIndex:
+            self.lib.sm64_set_mario_action(self.marioId, SM64Bindings.ACT_START_SLEEPING)
+            return
+        animId = self.EmoteAnims.get(emoteIndex, 39)
+        self.lib.sm64_set_mario_velocity(self.marioId, 0, 0, 0)
+        self.lib.sm64_set_mario_forward_velocity(self.marioId, 0)
+        self.lib.sm64_set_mario_action(self.marioId, SM64Bindings.ACT_UNINITIALIZED)
+        self.lib.sm64_set_mario_animation(self.marioId, animId)
+        self.lib.sm64_set_mario_anim_frame(self.marioId, 0)
+        self.emoteEndTick = self.tickCount + self.EmoteTicks
+
+    def isEmoting(self):
+        return self.emoteEndTick is not None
+
+    def __updateEmote(self):
+        if self.emoteEndTick is None:
+            return
+        hasInput = self.inputs.stickX or self.inputs.stickY or self.inputs.buttonA or self.inputs.buttonB or \
+            self.inputs.buttonZ
+        if self.tickCount >= self.emoteEndTick or (self.isLocal and hasInput) or \
+                self.state.action != SM64Bindings.ACT_UNINITIALIZED:
+            self.emoteEndTick = None
+            if self.state.action == SM64Bindings.ACT_UNINITIALIZED:
+                self.lib.sm64_set_mario_action(self.marioId, SM64Bindings.ACT_IDLE)
+                self.state.action = SM64Bindings.ACT_IDLE
+
     # Caps (wing / metal / vanish / normal)
     def giveCap(self, capName):
         capName = capName.lower()
@@ -187,6 +223,7 @@ class SM64Mario(NodePath):
         self.lib.sm64_set_mario_water_level(self.marioId, waterLevel)
         self.lib.sm64_mario_tick(self.marioId, ct.byref(self.inputs), ct.byref(self.state), ct.byref(self.geo))
         self.tickCount += 1
+        self.__updateEmote()
         self.__checkWaterTransition(waterLevel)
         if self.isLocal:
             if self.state.position[1] < self.manager.lowestY - 2000.0:

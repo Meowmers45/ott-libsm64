@@ -57,6 +57,13 @@ toward the camera never makes him flip-flop.
 While Mario is active: `~mario wing`, `~mario metal`, `~mario vanish` or `~mario normal`.
 Caps are networked, so other players see them too.
 
+## Emotes & laff meter
+
+Toontown's emote menu works on Mario: each emote maps to an SM64 animation (Wave = credits wave,
+Dance = Bowser-fight spin, Bow = cap tip, Sleepy = his real nap, ...) played for ~2.5 s or until you
+move, and other players see it too. While Mario is in play your laff meter shows his 8 SM64 health
+wedges scaled to your max laff (your real laff is untouched and restored when you switch back).
+
 ## Sound
 
 libsm64's audio engine is initialised from the ROM and streamed into Panda's OpenAL sound system, so

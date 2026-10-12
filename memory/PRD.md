@@ -100,6 +100,11 @@ source in /app so the player can switch between Mario and their Toon.
 - Score panels: already spread by HudAspectAdjuster (aspect2d children x scaled by widescreen factor); covered by
   a new regression in tests/test_hud_aspect.py
 
+## Iteration 15 (June 2026)
+- Emotes: DistributedToon.setEmoteState -> SM64Mario.playEmote (ACT_UNINITIALIZED no-op action + anim id map,
+  75 ticks or until input; Sleepy -> ACT_START_SLEEPING); remote Marios mirror via net state/emote hook
+- Laff bridge: LocalMarioController shows Mario health/0x880 * maxHp on laffMeter (adjustFace quietly), restored on release
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

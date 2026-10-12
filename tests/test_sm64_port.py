@@ -278,4 +278,24 @@ manager._SM64Manager__tickAudio()
 assert manager.audioSamplesPushed > pushedBefore
 mario2.destroy()
 
+# emotes: Toontown emote -> SM64 animation on the no-op action, auto-returning to idle
+mario3 = SM64Mario(manager, Point3(0, 0, 2), isLocal=True)
+mario3.setControllerInput(0, 0, False, False, False)
+mario3.playEmote(0)  # Wave
+mario3.tick()
+assert mario3.state.action == SM64Bindings.ACT_UNINITIALIZED and mario3.state.animID == 29, (mario3.state.action, mario3.state.animID)
+assert mario3.isEmoting()
+for _ in range(SM64Mario.EmoteTicks):
+    mario3.tick()
+assert not mario3.isEmoting() and mario3.state.action == SM64Bindings.ACT_IDLE
+mario3.playEmote(13)  # Bow
+mario3.tick()
+mario3.setControllerInput(0, 1, False, False, False)  # input cancels the emote
+mario3.tick()
+assert not mario3.isEmoting() and mario3.state.action == SM64Bindings.ACT_IDLE
+mario3.playEmote(4)  # Sleepy -> real SM64 nap
+mario3.tick()
+assert mario3.state.action == SM64Bindings.ACT_START_SLEEPING
+mario3.destroy()
+
 print('ALL SM64 PORT CHECKS PASSED')

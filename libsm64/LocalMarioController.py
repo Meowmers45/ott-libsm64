@@ -23,6 +23,7 @@ CAMERA_DISTANCE = SM64Globals.CAMERA_DISTANCE
 CAMERA_HEIGHT = SM64Globals.CAMERA_HEIGHT
 CAMERA_LOOK_HEIGHT = 2.6  # roughly Mario's head
 CAMERA_FOLLOW_RATE = SM64Globals.CAMERA_FOLLOW_RATE
+SM64_MAX_HEALTH = 0x880
 
 
 class LocalMarioController(DirectObject):
@@ -35,6 +36,7 @@ class LocalMarioController(DirectObject):
         self.controlling = False
         self.restoreSmartCamera = False
         self.steerHeading = None
+        self.shownLaff = None
         self.lastSentTick = -1
         self.lastSentAction = None
         self.lastSentAnim = None
@@ -124,6 +126,7 @@ class LocalMarioController(DirectObject):
         self.controlling = False
         self.mario.setControllerInput(0, 0, 0, 0, 0)
         self.__restoreTypeToChat()
+        self.__restoreLaffMeter()
         toon = self.toon
         if self.restoreSmartCamera and toon is not None and not toon.isEmpty() and not toon._smartCamEnabled:
             toon.startUpdateSmartCamera()
@@ -199,10 +202,31 @@ class LocalMarioController(DirectObject):
         diff = (mario.getHeading() - currentHeading + 180.0) % 360.0 - 180.0
         toon.setH(render, currentHeading + diff * min(1.0, CAMERA_FOLLOW_RATE * dt))
         self.__placeCamera()
+        self.__updateLaffMeter()
         self.manager.recenterIfNeeded(marioPos)
 
         self.__maybeSendNetState()
         return Task.cont
+
+    def __updateLaffMeter(self):
+        # Mario's 8 health wedges (0x880 max) are shown on the Toon's laff meter while he is in play
+        toon = self.toon
+        meter = getattr(toon, 'laffMeter', None)
+        if meter is None:
+            return
+        shown = max(1, int(round(toon.maxHp * min(1.0, self.mario.state.health / float(SM64_MAX_HEALTH)))))
+        if shown != self.shownLaff:
+            self.shownLaff = shown
+            meter.adjustFace(shown, toon.maxHp, quietly=1)
+            meter.adjustText()
+
+    def __restoreLaffMeter(self):
+        toon = self.toon
+        meter = getattr(toon, 'laffMeter', None)
+        if meter is not None and self.shownLaff is not None:
+            meter.adjustFace(toon.hp, toon.maxHp, quietly=1)
+            meter.adjustText()
+        self.shownLaff = None
 
     def __maybeSendNetState(self):
         mario = self.mario
