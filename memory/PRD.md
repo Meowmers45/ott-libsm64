@@ -49,6 +49,11 @@ source in /app so the player can switch between Mario and their Toon.
   surface + footprint, synthetic lake bed cells added to static surfaces; each Mario tick calls
   sm64_set_mario_water_level with the level at Mario's XY (NO_WATER_LEVEL -10000 otherwise)
 
+## Iteration 5 (June 2026)
+- Splash effects: SM64Mario tracks submerged state (100 SM64 units under surface) and notifies SM64Manager
+  (onMarioEnteredWater/onMarioLeftWater/onMarioDestroyed); libsm64/MarioSplash.py installs a handler that plays
+  toontown.effects.Splash + AV_jump_in_water at the surface (installed from DistributedToon/LocalToon on Mario spawn)
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

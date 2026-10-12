@@ -335,13 +335,14 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if self.marioMode:
             if self.mario is not None:
                 return
-            from libsm64 import SM64Manager
+            from libsm64 import SM64Manager, MarioSplash
             from libsm64.SM64Mario import SM64Mario
             from libsm64.LocalMarioController import LocalMarioController
             manager = SM64Manager.get()
             if not manager.ensureInit():
                 self.marioMode = 0
                 return
+            MarioSplash.install(manager)
             pos = self.getPos(render)
             manager.recenter(pos)
             mario = SM64Mario(manager, pos, isLocal=True)

@@ -153,6 +153,7 @@ class SM64Manager(DirectObject):
         self.dynamicKeys = set()
         self.dynamicObjects = {}
         self.waterRegions = []
+        self.splashHandler = None
         self.tickAccum = 0.0
         self.libPath = os.path.join(SM64Globals.LIB_DIR, SM64Bindings.getLibraryFilename())
         self.romPath = SM64Globals.ROM_PATH
@@ -317,6 +318,22 @@ class SM64Manager(DirectObject):
     def isInWater(self, pandaPos):
         return self.getWaterLevelSM64(pandaPos) != SM64Globals.NO_WATER_LEVEL
 
+    def waterLevelToPandaZ(self, level):
+        return self.origin[2] + level / SM64Globals.SCALE
+
+    # Water entry / exit notifications (Toontown splash effects hook in here)
+    def onMarioEnteredWater(self, mario, level):
+        if self.splashHandler is not None:
+            self.splashHandler.onMarioEnteredWater(mario, self.waterLevelToPandaZ(level))
+
+    def onMarioLeftWater(self, mario, level):
+        if self.splashHandler is not None:
+            self.splashHandler.onMarioLeftWater(mario, self.waterLevelToPandaZ(level))
+
+    def onMarioDestroyed(self, mario):
+        if self.splashHandler is not None:
+            self.splashHandler.onMarioDestroyed(mario)
+
     def __waterBedTriangles(self):
         tris = []
         cell = 100.0
@@ -471,6 +488,7 @@ class SM64Manager(DirectObject):
     def unregisterMario(self, mario):
         if mario in self.marios:
             self.marios.remove(mario)
+        self.onMarioDestroyed(mario)
         if not self.marios:
             taskMgr.remove(self.TaskName)
             taskMgr.remove(self.SurfaceTaskName)

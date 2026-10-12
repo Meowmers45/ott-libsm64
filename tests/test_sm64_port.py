@@ -184,10 +184,34 @@ assert manager.getWaterLevelSM64(Point3(60, 60, 0)) == expectedLevel
 assert manager.getWaterLevelSM64(Point3(0, 0, 0)) == SM64Globals.NO_WATER_LEVEL
 lib.stub_mario_water_level.argtypes = [ct.c_int32]
 lib.stub_mario_water_level.restype = ct.c_int
+
+# splash notifications: entering (100 SM64 units under the surface) and leaving water
+class FakeSplash:
+    def __init__(self):
+        self.events = []
+    def onMarioEnteredWater(self, m, z):
+        self.events.append(('enter', round(z, 3)))
+    def onMarioLeftWater(self, m, z):
+        self.events.append(('leave', round(z, 3)))
+    def onMarioDestroyed(self, m):
+        self.events.append(('destroyed',))
+fake = FakeSplash()
+manager.splashHandler = fake
+mario.warpTo(Point3(60, 60, 2))   # above the surface (z=1)
+mario.tick()
+assert fake.events == [], fake.events
+mario.warpTo(Point3(60, 60, 1.0 - 150 / SM64Globals.SCALE))  # 150 SM64 units below -> submerged
+mario.tick()
+assert fake.events == [('enter', 1.0)], fake.events
+mario.tick()
+assert len(fake.events) == 1  # no repeat while staying under
 mario.warpTo(Point3(60, 60, 2))
+mario.tick()
+assert fake.events[-1] == ('leave', 1.0), fake.events
 mario.setControllerInput(0, 0, False, False, False)
 mario.tick()
 assert lib.stub_mario_water_level(mario.marioId) == expectedLevel
+manager.splashHandler = None
 mario.warpTo(Point3(0, 0, 2))
 mario.tick()
 assert lib.stub_mario_water_level(mario.marioId) == SM64Globals.NO_WATER_LEVEL

@@ -282,10 +282,11 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
     def __createRemoteMario(self):
         if self.mario is not None:
             return
-        from libsm64 import SM64Manager
+        from libsm64 import SM64Manager, MarioSplash
         manager = SM64Manager.get()
         if not manager.ensureInit():
             return
+        MarioSplash.install(manager)
         if manager.surfaceCount == 0:
             manager.recenter(self.getPos(render))
         from libsm64.SM64Mario import SM64Mario

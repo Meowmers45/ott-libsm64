@@ -39,6 +39,8 @@ class SM64Mario(NodePath):
         self.lastAppliedAction = None
         self.lastAppliedAnim = None
         self.followNode = None
+        self.inWater = False
+        self.lastWaterLevel = SM64Globals.NO_WATER_LEVEL
 
         self.geomNode = GeomNode('mario')
         NodePath.__init__(self, self.geomNode)
@@ -172,9 +174,11 @@ class SM64Mario(NodePath):
             return
         if not self.isLocal:
             self.__applyRemoteState()
-        self.lib.sm64_set_mario_water_level(self.marioId, self.manager.getWaterLevelSM64(self.getPandaPos()))
+        waterLevel = self.manager.getWaterLevelSM64(self.getPandaPos())
+        self.lib.sm64_set_mario_water_level(self.marioId, waterLevel)
         self.lib.sm64_mario_tick(self.marioId, ct.byref(self.inputs), ct.byref(self.state), ct.byref(self.geo))
         self.tickCount += 1
+        self.__checkWaterTransition(waterLevel)
         if self.isLocal:
             if self.state.position[1] < self.manager.lowestY - 2000.0:
                 self.notify.info('Mario fell out of the world, respawning')
@@ -184,6 +188,16 @@ class SM64Mario(NodePath):
                 # Toontown has no 1-ups; keep Mario alive
                 self.lib.sm64_set_mario_health(self.marioId, 0x880)
         self.__updateGeom()
+
+    def __checkWaterTransition(self, waterLevel):
+        # SM64 counts Mario as submerged once he is 100 units under the surface
+        inWater = waterLevel != SM64Globals.NO_WATER_LEVEL and self.state.position[1] < waterLevel - 100
+        if inWater and not self.inWater:
+            self.manager.onMarioEnteredWater(self, waterLevel)
+        elif self.inWater and not inWater and self.lastWaterLevel != SM64Globals.NO_WATER_LEVEL:
+            self.manager.onMarioLeftWater(self, self.lastWaterLevel)
+        self.inWater = inWater
+        self.lastWaterLevel = waterLevel
 
     def destroy(self):
         self.manager.unregisterMario(self)

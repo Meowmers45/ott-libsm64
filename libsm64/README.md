@@ -87,7 +87,9 @@ Scene nodes whose name contains one of `sm64-water-node-patterns` (default `wate
 surface over its footprint, and a lake bed is synthesised `sm64-water-depth` units below it where the
 level has no real floor. Mario dives, swims and surfaces in Donald's Dock's harbour, the Outdoor Zone
 lake and playground ponds; Toontown's own underwater fog/sound still triggers because the Toon node
-follows Mario.
+follows Mario. Entering the water plays Toontown's splash ripple and dive sound (`AV_jump_in_water`)
+at the surface, with a smaller ripple when Mario jumps back out; remote Marios splash too since every
+client simulates them.
 
 ## Known limitations
 
