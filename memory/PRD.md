@@ -72,7 +72,7 @@ source in /app so the player can switch between Mario and their Toon.
 - Removed fixed `aspect-ratio 1.333333` from Configrc.prc so Panda derives aspect from the window size
 
 ## Iteration 9 (June 2026)
-- No sleeping while Mario: controller sets toon.noSleep=1 on grab (restored on release) and wakes the toon on input
+- Sleep: toon.wakeUp() is called whenever Mario has input or SM64 velocity; idle sleep otherwise untouched
 
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)

@@ -101,7 +101,7 @@ client simulates them.
 * Cog battles automatically switch you back to your Toon (Cogs only battle Toons); putting on a Cog
   disguise does too, and you can't enter Mario Mode while disguised.
 * The Shtiker Book (and Options page) can't be opened while Mario is in play - switch back first.
-* Your Toon never falls asleep while Mario is in play.
+* Moving Mario counts as moving your Toon, so idle sleep behaves as usual (he dozes only when Mario stands still).
 * Doors, tunnels and cog contact still work in Mario Mode (the Toon's event sphere stays active),
   but Mario can't be pushed by walls he doesn't collide with in libsm64 (e.g. invisible camera walls).
 * Mario's attacks don't affect Cogs or Toons.

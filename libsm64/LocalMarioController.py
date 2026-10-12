@@ -30,7 +30,6 @@ class LocalMarioController(DirectObject):
         self.manager = manager
         self.controlling = False
         self.restoreSmartCamera = False
-        self.savedNoSleep = 0
         self.lastSentTick = -1
         self.lastSentAction = None
         self.lastSentAnim = None
@@ -121,9 +120,6 @@ class LocalMarioController(DirectObject):
         self.mario.setControllerInput(0, 0, 0, 0, 0)
         self.__restoreTypeToChat()
         toon = self.toon
-        if toon is not None and not toon.isEmpty():
-            toon.noSleep = self.savedNoSleep
-            toon.wakeUp()
         if self.restoreSmartCamera and toon is not None and not toon.isEmpty() and not toon._smartCamEnabled:
             toon.startUpdateSmartCamera()
         self.restoreSmartCamera = False
@@ -168,12 +164,13 @@ class LocalMarioController(DirectObject):
         # keyboard drives Mario only: make sure nothing re-enabled the Toon's walk controls
         if toon.controlManager.isEnabled:
             toon.controlManager.disable()
-        if stickX or stickY or a or b or z:
-            toon.wakeUp()
-        if getattr(toon, 'sleepFlag', 0):
-            toon.wakeUp()
         mario.setControllerInput(stickX, stickY, a, b, z)
         mario.setCameraPos(builtins.base.camera.getPos(render))
+        # Mario moving (input or SM64 velocity) counts as the Toon moving, so idle sleep works as usual
+        vel = mario.state.velocity
+        if stickX or stickY or a or b or z or abs(mario.state.forwardVelocity) > 1.0 or \
+                abs(vel[0]) + abs(vel[1]) + abs(vel[2]) > 1.0:
+            toon.wakeUp()
 
         # The hidden toon node follows Mario, so the Toontown camera and nametag follow him too.
         # Heading is locked to Mario's facing: the camera always sits behind him.
