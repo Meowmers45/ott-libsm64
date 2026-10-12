@@ -16,7 +16,7 @@ romPath = os.path.join(STUB_DIR, 'sm64.z64')
 with open(romPath, 'wb') as f:
     f.write(b'\x80\x37\x12\x40' + b'\x00' * 1020)
 
-from panda3d.core import loadPrcFileData, Point3, CollisionNode, CollisionPolygon
+from panda3d.core import loadPrcFileData, Point3, Mat4, CollisionNode, CollisionPolygon
 loadPrcFileData('', 'window-type none')
 loadPrcFileData('', 'audio-library-name null')
 loadPrcFileData('', 'sm64-lib-dir %s' % STUB_DIR)
@@ -113,6 +113,55 @@ elevator.setPos(25, 0, 2)
 mario.tick()  # ticks don't move objects; the manager's tick task does
 manager._SM64Manager__updateDynamicObjects()
 assert abs(lib.stub_object_pos_x(dyn.objectId) - 25 * SM64Globals.SCALE) < 1e-3
+
+# smooth rotation: rotating the prop streams euler angles instead of rebuilding the object
+import math
+import random
+from panda3d.core import Vec3
+from libsm64.SM64Manager import sm64EulerFromHpr
+
+
+def sm64_rotate_zxy(point, euler):
+    # mirror of libsm64: CONVERT_ANGLE negates degrees, then mtxf_rotate_zxy_and_translate (row vectors)
+    rx, ry, rz = [math.radians(-e) for e in euler]
+    sx, cx = math.sin(rx), math.cos(rx)
+    sy, cy = math.sin(ry), math.cos(ry)
+    sz, cz = math.sin(rz), math.cos(rz)
+    m = [[cy * cz + sx * sy * sz, cx * sz, -sy * cz + sx * cy * sz],
+         [-cy * sz + sx * sy * cz, cx * cz, sy * sz + sx * cy * cz],
+         [cx * sy, -sx, cx * cy]]
+    x, y, z = point
+    return (x * m[0][0] + y * m[1][0] + z * m[2][0],
+            x * m[0][1] + y * m[1][1] + z * m[2][1],
+            x * m[0][2] + y * m[1][2] + z * m[2][2])
+
+
+random.seed(7)
+for _ in range(50):
+    hpr = Vec3(random.uniform(-180, 180), random.uniform(-89, 89), random.uniform(-180, 180))
+    scale = Vec3(random.uniform(0.5, 2), random.uniform(0.5, 2), random.uniform(0.5, 2))
+    probe = base.render.attachNewNode('probe')
+    probe.setHpr(hpr)
+    probe.setScale(scale)
+    local = Point3(3, -1, 2)
+    expected = probe.getMat(base.render).xformPoint(local)
+    scaled = Mat4.scaleMat(scale).xformPoint(local)
+    sm = SM64Globals.toSM64(scaled, Point3(0, 0, 0))
+    rotated = sm64_rotate_zxy(sm, sm64EulerFromHpr(hpr))
+    got = SM64Globals.fromSM64(rotated[0], rotated[1], rotated[2], Point3(0, 0, 0))
+    assert (got - expected).length() < 1e-3, (hpr, got, expected)
+    probe.removeNode()
+
+lib.stub_object_euler_y.argtypes = [ct.c_uint32]
+lib.stub_object_euler_y.restype = ct.c_float
+objBefore = dyn.objectId
+elevator.setH(90)
+manager._SM64Manager__updateDynamicObjects()
+assert dyn.objectId == objBefore, 'rotation must not rebuild the surface object'
+assert abs(abs(lib.stub_object_euler_y(dyn.objectId)) - 90) < 0.01, lib.stub_object_euler_y(dyn.objectId)
+elevator.setScale(2)
+manager._SM64Manager__updateDynamicObjects()
+assert dyn.objectId is not None and lib.stub_object_alive_count() == 1  # scale change re-bakes
 elevator.removeNode()
 manager._SM64Manager__updateDynamicObjects()
 assert len(manager.dynamicObjects) == 0 and lib.stub_object_alive_count() == 0

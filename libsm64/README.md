@@ -61,7 +61,9 @@ jumps, punches and Mario's voice play as in SM64 (including the cap music). Conf
 Collision nodes under props whose name contains one of `sm64-dynamic-node-patterns`
 (default: `elevator trolley platform lift goon crate`), plus any "static" collision node that is seen
 moving, are uploaded as libsm64 surface objects and updated every tick so Mario can ride them.
-Rotation is baked at creation time (rotating props are re-baked when their orientation changes).
+Position and rotation are streamed through libsm64's object transform (Panda HPR is converted to
+SM64's ZXY euler angles), so rotating props turn smoothly under Mario; only a scale change re-bakes
+the object's vertices.
 
 ## How it works
 
@@ -83,5 +85,4 @@ Rotation is baked at creation time (rotating props are re-baked when their orien
 * Cog battles automatically switch you back to your Toon (Cogs only battle Toons).
 * Doors, tunnels and cog contact still work in Mario Mode (the Toon's event sphere stays active),
   but Mario can't be pushed by walls he doesn't collide with in libsm64 (e.g. invisible camera walls).
-* Moving platforms use translation only; rotating props are re-baked rather than smoothly rotated.
 * Mario's attacks don't affect Cogs or Toons.

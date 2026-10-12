@@ -1,4 +1,5 @@
 import os
+import math
 import builtins
 import ctypes as ct
 from direct.directnotify import DirectNotifyGlobal
@@ -6,11 +7,35 @@ from direct.task import Task
 from direct.task.TaskManagerGlobal import taskMgr
 from direct.showbase.ShowBaseGlobal import globalClock
 from direct.showbase.DirectObject import DirectObject
-from panda3d.core import Point3, Mat4, Texture, PNMImage, SamplerState, Shader, Filename, CollisionPolygon, \
-    UserDataAudio
+from panda3d.core import Point3, Vec3, Mat3, Mat4, Texture, PNMImage, SamplerState, Shader, Filename, \
+    CollisionPolygon, UserDataAudio, decomposeMatrix, composeMatrix
 from libsm64 import SM64Bindings, SM64Globals
 
 _manager = None
+
+# row-vector basis change panda (x, y, z) -> sm64 (x, z, -y)
+_PANDA_TO_SM64 = Mat3(1, 0, 0,
+                      0, 0, -1,
+                      0, 1, 0)
+_SM64_TO_PANDA = Mat3(_PANDA_TO_SM64)
+_SM64_TO_PANDA.transposeInPlace()
+
+
+def sm64EulerFromHpr(hpr):
+    """Panda HPR -> libsm64 SM64ObjectTransform.eulerRotation (degrees, ZXY order as used by libsm64)."""
+    rot = Mat3()
+    composeMatrix(rot, Vec3(1, 1, 1), Vec3(0, 0, 0), hpr)
+    r = _SM64_TO_PANDA * rot * _PANDA_TO_SM64
+    sx = max(-1.0, min(1.0, -r.getCell(2, 1)))
+    x = math.asin(sx)
+    if abs(math.cos(x)) > 1e-4:
+        y = math.atan2(r.getCell(2, 0), r.getCell(2, 2))
+        z = math.atan2(r.getCell(0, 1), r.getCell(1, 1))
+    else:
+        y = math.atan2(-r.getCell(0, 2), r.getCell(0, 0))
+        z = 0.0
+    # libsm64 negates the angles it receives (CONVERT_ANGLE)
+    return (-math.degrees(x), -math.degrees(y), -math.degrees(z))
 
 
 def _render():
@@ -25,7 +50,8 @@ def get():
 
 
 class DynamicSurfaceObject:
-    """A moving collision node (elevator, trolley...) mirrored as a libsm64 surface object."""
+    """A moving collision node (elevator, trolley...) mirrored as a libsm64 surface object.
+    Scale is baked into the vertices; position and rotation are streamed through the object transform."""
 
     def __init__(self, manager, nodePath):
         self.manager = manager
@@ -33,30 +59,33 @@ class DynamicSurfaceObject:
         self.objectId = None
         self.surfaces = None
         self.transform = SM64Bindings.SM64ObjectTransform()
-        self.baseMat = None
+        self.baseScale = None
+        self.lastPos = None
+        self.lastHpr = None
         self.create()
 
-    def __rotScale(self, mat):
-        m = Mat4(mat)
-        m.setRow(3, Point3(0, 0, 0))
-        return m
+    def __decompose(self, mat):
+        scale, shear, hpr = Vec3(), Vec3(), Vec3()
+        decomposeMatrix(mat.getUpper3(), scale, shear, hpr)
+        return scale, hpr, Point3(mat.getRow3(3))
 
-    def __polygonTriangles(self, rotScale):
+    def __polygonTriangles(self, scaleMat):
         tris = []
         cnode = self.nodePath.node()
         for i in range(cnode.getNumSolids()):
             solid = cnode.getSolid(i)
             if not isinstance(solid, CollisionPolygon) or not solid.isTangible():
                 continue
-            pts = [rotScale.xformPoint(solid.getPoint(j)) for j in range(solid.getNumPoints())]
+            pts = [scaleMat.xformPoint(solid.getPoint(j)) for j in range(solid.getNumPoints())]
             for j in range(1, len(pts) - 1):
                 tris.append((pts[0], pts[j], pts[j + 1]))
         return tris
 
     def create(self):
         mat = self.nodePath.getMat(_render())
-        self.baseMat = self.__rotScale(mat)
-        tris = self.__polygonTriangles(self.baseMat)
+        scale, hpr, pos = self.__decompose(mat)
+        self.baseScale = Vec3(scale)
+        tris = self.__polygonTriangles(Mat4.scaleMat(scale))
         if not tris:
             return
         self.surfaces = (SM64Bindings.SM64Surface * len(tris))()
@@ -68,33 +97,33 @@ class DynamicSurfaceObject:
             for v in range(3):
                 x, y, z = SM64Globals.toSM64(tri[v], origin)
                 s.vertices[v][0], s.vertices[v][1], s.vertices[v][2] = int(x), int(y), int(z)
-        self.__fillTransform(mat.getRow3(3))
+        self.__fillTransform(pos, hpr)
         obj = SM64Bindings.SM64SurfaceObject()
         obj.transform = self.transform
         obj.surfaceCount = len(tris)
         obj.surfaces = ct.cast(self.surfaces, ct.POINTER(SM64Bindings.SM64Surface))
         self.objectId = self.manager.lib.sm64_surface_object_create(ct.byref(obj))
-        self.lastPos = Point3(mat.getRow3(3))
 
-    def __fillTransform(self, pandaPos):
+    def __fillTransform(self, pandaPos, hpr):
         x, y, z = self.manager.toSM64(pandaPos)
         self.transform.position[0], self.transform.position[1], self.transform.position[2] = x, y, z
-        self.transform.eulerRotation[0] = self.transform.eulerRotation[1] = self.transform.eulerRotation[2] = 0.0
+        ex, ey, ez = sm64EulerFromHpr(hpr)
+        self.transform.eulerRotation[0], self.transform.eulerRotation[1], self.transform.eulerRotation[2] = ex, ey, ez
+        self.lastPos = Point3(pandaPos)
+        self.lastHpr = Vec3(hpr)
 
     def update(self):
         if self.nodePath.isEmpty() or self.nodePath.getTop() != _render():
             self.destroy()
             return False
         mat = self.nodePath.getMat(_render())
-        rotScale = self.__rotScale(mat)
-        if self.objectId is None or not rotScale.almostEqual(self.baseMat, 0.001):
+        scale, hpr, pos = self.__decompose(mat)
+        if self.objectId is None or not scale.almostEqual(self.baseScale, 0.001):
             self.destroy()
             self.create()
             return True
-        pos = mat.getRow3(3)
-        if (pos - self.lastPos).lengthSquared() > 1e-8:
-            self.lastPos = Point3(pos)
-            self.__fillTransform(pos)
+        if not pos.almostEqual(self.lastPos, 1e-4) or not hpr.almostEqual(self.lastHpr, 1e-3):
+            self.__fillTransform(pos, hpr)
             self.manager.lib.sm64_surface_object_move(self.objectId, ct.byref(self.transform))
         return True
 

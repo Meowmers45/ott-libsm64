@@ -85,6 +85,7 @@ void sm64_surface_object_move(uint32_t id, const struct SM64ObjectTransform *t) 
 void sm64_surface_object_delete(uint32_t id) { g_objs[id].alive = 0; }
 int stub_object_alive_count(void) { int n = 0; for (int i = 0; i < 16; ++i) n += g_objs[i].alive; return n; }
 float stub_object_pos_x(uint32_t id) { return g_objs[id].t.position[0]; }
+float stub_object_euler_y(uint32_t id) { return g_objs[id].t.eulerRotation[1]; }
 
 static int g_audioInit = 0;
 void sm64_audio_init(const uint8_t *rom) { g_audioInit = 1; }
