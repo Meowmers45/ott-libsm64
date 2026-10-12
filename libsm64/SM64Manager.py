@@ -288,6 +288,8 @@ class SM64Manager(DirectObject):
     # Water: named scene nodes (ponds, harbours) become SM64 water with a synthetic lake bed
     def __collectWaterRegions(self):
         regions = []
+        if not SM64Globals.WATER_ENABLED:
+            return regions
         render = _render()
         seen = set()
         for pattern in SM64Globals.WATER_NODE_PATTERNS:

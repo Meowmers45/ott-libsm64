@@ -26,6 +26,20 @@ CAMERA_FOLLOW_RATE = SM64Globals.CAMERA_FOLLOW_RATE
 SM64_MAX_HEALTH = 0x880
 
 
+def steeringReference(stickX, stickY, viewHeading, marioHeading, latched):
+    # Returns (latched, heading the stick is measured against). Left/right (and forward+side) are
+    # measured against Mario's *current* facing, so a held turn key keeps him turning. Only "back"
+    # latches the view heading at key press: measured against his facing it would turn him around
+    # every tick (flip-flop).
+    if stickY < 0:
+        if latched is None:
+            latched = viewHeading
+        return latched, latched
+    if stickX or stickY:
+        return None, marioHeading
+    return None, viewHeading
+
+
 class LocalMarioController(DirectObject):
     notify = DirectNotifyGlobal.directNotify.newCategory('LocalMarioController')
 
@@ -174,16 +188,10 @@ class LocalMarioController(DirectObject):
         if toon.controlManager.isEnabled:
             toon.controlManager.disable()
         mario.setControllerInput(stickX, stickY, a, b, z)
-        # Steering reference: latch the view heading when a direction is first pressed and keep it while
-        # keys are held, so a chase camera that swings behind Mario can't feed back into his steering
-        # (pressing "down" turns him around once and he keeps running that way instead of flip-flopping).
         currentHeading = toon.getH(render)
-        if stickX or stickY:
-            if self.steerHeading is None:
-                self.steerHeading = currentHeading
-        else:
-            self.steerHeading = None
-        mario.setCameraYaw(self.steerHeading if self.steerHeading is not None else currentHeading)
+        self.steerHeading, steerHeading = steeringReference(stickX, stickY, currentHeading, mario.getHeading(),
+                                                            self.steerHeading)
+        mario.setCameraYaw(steerHeading)
         # The Toon sleeps exactly when Mario does (SM64's idle nap), and wakes when he wakes
         if mario.state.action in SLEEP_ACTIONS:
             if not getattr(toon, 'sleepFlag', 0) and toon.hp > 0:

@@ -231,6 +231,7 @@ class Place(StateData, FriendsListManager):
         base.localAvatar.questMap.acceptOnscreenHooks()
         self.walkStateData.fsm.request('walking')
         self.enablePeriodTimer()
+        base.localAvatar.resumeMarioMode()
 
     def exitWalk(self):
         self.exitFLM()
@@ -240,6 +241,9 @@ class Place(StateData, FriendsListManager):
         self.disablePeriodTimer()
         messenger.send('wakeup')
         self.walkStateData.exit()
+        # Everything outside 'walk' (book, teleports, tunnels, doors, NPCs, battles) animates the Toon:
+        # park Mario and bring him back when we are walking again
+        base.localAvatar.suspendMarioMode()
         self.ignore(self.walkDoneEvent)
         base.localAvatar.setTeleportAvailable(0)
         self.ignore('teleportQuery')

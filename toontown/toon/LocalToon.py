@@ -81,6 +81,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
             talkAssistant = TTTalkAssistant.TTTalkAssistant()
             LocalAvatar.LocalAvatar.__init__(self, cr, chatMgr, talkAssistant, passMessagesThrough=True)
             self.marioController = None
+            self.marioSuspended = False
             self.soundRun = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_runloop.ogg')
             self.soundWalk = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_walkloop.ogg')
             self.soundWhisper = base.loader.loadSfx('phase_3.5/audio/sfx/GUI_whisper_3.ogg')
@@ -285,11 +286,15 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
     def toggleMarioMode(self):
         from libsm64 import SM64Manager
         manager = SM64Manager.get()
+        # An explicit toggle always wins over a pending automatic restore (book / zone change)
+        self.marioSuspended = False
         if self.marioMode:
             self.b_setMarioMode(0)
             return "Welcome back, Toon!"
         if self.isDisguised:
             return "Mario can't wear a Cog disguise. Take it off first."
+        if not self.avatarControlsEnabled:
+            return 'Mario can only take over while your Toon is free to walk around.'
         if not manager.isAvailable():
             return manager.getMissingMessage()
         if not manager.ensureInit():
@@ -304,11 +309,27 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.d_setMarioMode(self.marioMode)
 
     def exitMarioModeForBattle(self):
-        # Cogs only fight Toons: switch back automatically when a battle starts
+        # Cogs only fight Toons: park Mario when a battle starts; he comes back once you're walking again
+        if not self.marioMode:
+            return
+        self.suspendMarioMode()
+        self.setSystemMessage(0, 'Spellbook: Cogs only battle Toons - Mario will be back after the battle!', WhisperPopup.WTSystem)
+
+    def suspendMarioMode(self):
+        # Toontown needs the Toon (book, teleport, tunnels, doors, NPCs...): hand back the Toon for now
         if not self.marioMode:
             return
         self.b_setMarioMode(0)
-        self.setSystemMessage(0, 'Spellbook: Mario Mode ended - Cogs only battle Toons!', WhisperPopup.WTSystem)
+        self.marioSuspended = True
+
+    def resumeMarioMode(self):
+        # Back in a walkable place: bring Mario back if he was only suspended (not switched off on purpose)
+        if not self.marioSuspended:
+            return
+        self.marioSuspended = False
+        if self.marioMode or self.isDisguised or not self.avatarControlsEnabled:
+            return
+        self.b_setMarioMode(1)
 
     def giveMarioCap(self, capName):
         if not self.isMario():

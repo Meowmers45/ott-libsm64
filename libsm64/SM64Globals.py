@@ -31,6 +31,8 @@ SFX_VOLUME = ConfigVariableDouble('sm64-sfx-volume', 0.7).getValue()
 # Collision nodes whose ancestors match one of these (case-insensitive) names become moving surface objects
 DYNAMIC_NODE_PATTERNS = [p.lower() for p in ConfigVariableString(
     'sm64-dynamic-node-patterns', 'elevator trolley platform lift goon crate').getValue().split()]
+# Water is off by default: Mario walks on Toontown's ponds like any other floor (sm64-water 1 to swim)
+WATER_ENABLED = ConfigVariableBool('sm64-water', False).getValue()
 # Scene nodes whose name contains one of these become SM64 water (surface = top of the node's bounds)
 WATER_NODE_PATTERNS = [p.lower() for p in ConfigVariableString('sm64-water-node-patterns', 'water pond').getValue().split()]
 WATER_EXCLUDE_PATTERNS = [p.lower() for p in ConfigVariableString(

@@ -90,6 +90,22 @@ mario.setCameraYaw(180.0)
 assert mario.inputs.camLookZ < 0 and abs(mario.inputs.camLookX) < 1e-6
 mario.setCameraYaw(0.0)  # facing +Y -> camera at -Y -> SM64 +Z, consistent with setCameraPos above
 assert mario.inputs.camLookZ > 0 and abs(mario.inputs.camLookX) < 1e-6
+# continuous turning: left/right (and forward+side) are measured against Mario's live facing, so the
+# reference keeps moving with him; only "back" latches the view heading until released
+from libsm64.LocalMarioController import steeringReference
+latched = None
+for marioH in (0.0, 30.0, 60.0, 90.0):
+    latched, ref = steeringReference(1, 0, 10.0, marioH, latched)
+    assert latched is None and ref == marioH, (latched, ref)
+latched, ref = steeringReference(1, 1, 10.0, 45.0, latched)
+assert latched is None and ref == 45.0
+latched, ref = steeringReference(0, -1, 10.0, 45.0, latched)
+assert latched == 10.0 and ref == 10.0
+latched, ref = steeringReference(0, -1, 170.0, 190.0, latched)  # view swung behind him: reference stays put
+assert latched == 10.0 and ref == 10.0
+latched, ref = steeringReference(0, 0, 170.0, 190.0, latched)
+assert latched is None and ref == 170.0
+
 mario.tick()
 assert mario.state.action == 0x03000880
 pos = mario.getPandaPos()
@@ -191,6 +207,12 @@ pond.setPos(60, 60, 1.0)
 falls = base.render.attachNewNode(CardMaker('waterfall').generate())  # excluded by name
 falls.setPos(60, 60, 30)
 staticBefore = manager.surfaceCount
+# water is disabled by default (Mario treats ponds as floor): the pond must be ignored unless sm64-water is on
+assert not SM64Globals.WATER_ENABLED
+manager.loadSurfaces()
+assert not manager.waterRegions and manager.surfaceCount == staticBefore
+assert manager.getWaterLevelSM64(Point3(60, 60, 0)) == SM64Globals.NO_WATER_LEVEL
+SM64Globals.WATER_ENABLED = True
 manager.loadSurfaces()
 assert len(manager.waterRegions) == 1, manager.waterRegions
 assert manager.surfaceCount == staticBefore + 2  # 20x20 pond -> one bed cell -> 2 triangles
@@ -234,6 +256,7 @@ pond.removeNode()
 falls.removeNode()
 manager.loadSurfaces()
 assert not manager.waterRegions and manager.surfaceCount == staticBefore
+SM64Globals.WATER_ENABLED = False
 
 # remote mario follows a node & applies net state
 follow = base.render.attachNewNode('remoteToon')

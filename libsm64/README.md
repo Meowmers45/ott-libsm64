@@ -48,9 +48,9 @@ for the duration and restored when you switch back.
 
 While Mario is in play Toontown's smart camera is paused and the camera stays behind Mario's
 head (`sm64-camera-distance` / `sm64-camera-height`), easing onto his new facing at
-`sm64-camera-follow-rate` per second so Mario always faces away from the camera. Steering is measured
-against the view you had when you pressed a direction key (held until release), so turning or running
-toward the camera never makes him flip-flop.
+`sm64-camera-follow-rate` per second so Mario always faces away from the camera. Left/right (and forward+side) steer relative to
+Mario's current facing, so he keeps turning for as long as you hold the key; only "back" is measured
+against the view you had when you pressed it, so running toward the camera never makes him flip-flop.
 
 ## Caps
 
@@ -96,7 +96,7 @@ the object's vertices.
 
 ## Water
 
-Scene nodes whose name contains one of `sm64-water-node-patterns` (default `water pond`, minus
+Water is off unless `sm64-water 1` is set. Then scene nodes whose name contains one of `sm64-water-node-patterns` (default `water pond`, minus
 `sm64-water-exclude-patterns`) are treated as SM64 water: the top of the node's bounds is the water
 surface over its footprint, and a lake bed is synthesised `sm64-water-depth` units below it where the
 level has no real floor. Mario dives, swims and surfaces in Donald's Dock's harbour, the Outdoor Zone
@@ -107,9 +107,12 @@ client simulates them.
 
 ## Known limitations
 
-* Cog battles automatically switch you back to your Toon (Cogs only battle Toons); putting on a Cog
-  disguise does too, and you can't enter Mario Mode while disguised.
-* The Shtiker Book (and Options page) can't be opened while Mario is in play - switch back first.
+* Whenever Toontown needs your Toon - opening the Shtiker Book, teleporting, tunnels, doors, elevators,
+  talking to NPCs, Cog battles - Mario is parked and your Toon takes over; Mario comes back automatically
+  as soon as you are walking again (unless you toggled `~mario` off yourself in between).
+* Putting on a Cog disguise ends Mario Mode, and you can't enter Mario Mode while disguised.
+* Water is ignored by default (Mario treats ponds as ordinary floor); set `sm64-water 1` to turn
+  Toontown water into SM64 water he can swim in.
 * Your Toon sleeps exactly when Mario takes his SM64 idle nap, and wakes up when he does; the
   Toontown "zzz" thought bubble floats above Mario's nametag while he snores.
 * Doors, tunnels and cog contact still work in Mario Mode (the Toon's event sphere stays active),
