@@ -81,6 +81,12 @@ source in /app so the player can switch between Mario and their Toon.
   aspect2d children by aspect/(4/3) (tracks design positions, handles new/moved nodes) and converts camLens.setFov(h)
   (4:3 design) into setMinFov(vertical) so the horizontal FOV widens with the window; tests/test_hud_aspect.py
 
+## Iteration 11 (June 2026)
+- Crash on Mario->Toon fixed: releaseControls now collisionsOn() before controlManager.enable() (GravityWalker asserts)
+- Camera jitter fixed: faceAngleToHeading was mirrored; now heading = 180 + deg(yaw) (verified vs SM64 movement dir)
+- Loading screen background scaled uniformly to cover the window (ToontownLoadingScreen.fitBackground)
+- testing agent iteration_4: all green
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
