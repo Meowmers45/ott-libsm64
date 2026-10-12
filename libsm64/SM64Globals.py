@@ -23,6 +23,8 @@ TOGGLE_KEY = ConfigVariableString('sm64-toggle-key', 'm').getValue()
 # Fixed chase camera behind Mario's head (Panda units)
 CAMERA_DISTANCE = ConfigVariableDouble('sm64-camera-distance', 12.0).getValue()
 CAMERA_HEIGHT = ConfigVariableDouble('sm64-camera-height', 5.0).getValue()
+# How quickly (per second) the chase camera eases in behind Mario's new facing
+CAMERA_FOLLOW_RATE = ConfigVariableDouble('sm64-camera-follow-rate', 10.0).getValue()
 # SM64 sound effects through libsm64's audio engine
 AUDIO_ENABLED = ConfigVariableBool('sm64-audio', True).getValue()
 SFX_VOLUME = ConfigVariableDouble('sm64-sfx-volume', 0.7).getValue()

@@ -1,4 +1,5 @@
 import builtins
+import math
 import ctypes as ct
 from direct.directnotify import DirectNotifyGlobal
 from panda3d.core import NodePath, GeomNode, Geom, GeomVertexFormat, GeomVertexArrayFormat, GeomVertexData, \
@@ -108,8 +109,15 @@ class SM64Mario(NodePath):
         self.inputs.buttonB = int(bool(buttonB))
         self.inputs.buttonZ = int(bool(buttonZ))
 
+    def setCameraYaw(self, heading):
+        # Stick directions are interpreted relative to this view heading (Panda degrees):
+        # the Mario -> camera direction for heading H is (sin H, -cos H) in panda == (sin H, cos H) in SM64 (x, z)
+        rad = math.radians(heading)
+        self.inputs.camLookX = math.sin(rad)
+        self.inputs.camLookZ = math.cos(rad)
+
     def setCameraPos(self, camPandaPos):
-        # libsm64 wants the camera -> Mario look direction; in our Z-up/Y-up mapping this is cam - mario
+        # libsm64 wants the Mario -> camera direction; in our Z-up/Y-up mapping this is cam - mario
         cx, cy, cz = self.manager.toSM64(camPandaPos)
         self.inputs.camLookX = cx - self.state.position[0]
         self.inputs.camLookZ = cz - self.state.position[2]

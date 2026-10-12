@@ -22,6 +22,7 @@ KEY_CHAT = 't'
 CAMERA_DISTANCE = SM64Globals.CAMERA_DISTANCE
 CAMERA_HEIGHT = SM64Globals.CAMERA_HEIGHT
 CAMERA_LOOK_HEIGHT = 2.6  # roughly Mario's head
+CAMERA_FOLLOW_RATE = SM64Globals.CAMERA_FOLLOW_RATE
 
 
 class LocalMarioController(DirectObject):
@@ -33,6 +34,7 @@ class LocalMarioController(DirectObject):
         self.manager = manager
         self.controlling = False
         self.restoreSmartCamera = False
+        self.steerHeading = None
         self.lastSentTick = -1
         self.lastSentAction = None
         self.lastSentAnim = None
@@ -169,7 +171,16 @@ class LocalMarioController(DirectObject):
         if toon.controlManager.isEnabled:
             toon.controlManager.disable()
         mario.setControllerInput(stickX, stickY, a, b, z)
-        mario.setCameraPos(builtins.base.camera.getPos(render))
+        # Steering reference: latch the view heading when a direction is first pressed and keep it while
+        # keys are held, so a chase camera that swings behind Mario can't feed back into his steering
+        # (pressing "down" turns him around once and he keeps running that way instead of flip-flopping).
+        currentHeading = toon.getH(render)
+        if stickX or stickY:
+            if self.steerHeading is None:
+                self.steerHeading = currentHeading
+        else:
+            self.steerHeading = None
+        mario.setCameraYaw(self.steerHeading if self.steerHeading is not None else currentHeading)
         # The Toon sleeps exactly when Mario does (SM64's idle nap), and wakes when he wakes
         if mario.state.action in SLEEP_ACTIONS:
             if not getattr(toon, 'sleepFlag', 0) and toon.hp > 0:
@@ -180,10 +191,13 @@ class LocalMarioController(DirectObject):
                 toon.wakeUp()
 
         # The hidden toon node follows Mario, so the Toontown camera and nametag follow him too.
-        # Heading is locked to Mario's facing: the camera always sits behind him.
+        # The view heading eases onto Mario's facing (fast, but not per-tick snapping) so the camera
+        # swings smoothly behind his head instead of stepping at libsm64's 30 Hz.
         marioPos = mario.getPandaPos()
         toon.setPos(render, marioPos)
-        toon.setH(render, mario.getHeading())
+        dt = globalClock.getDt()
+        diff = (mario.getHeading() - currentHeading + 180.0) % 360.0 - 180.0
+        toon.setH(render, currentHeading + diff * min(1.0, CAMERA_FOLLOW_RATE * dt))
         self.__placeCamera()
         self.manager.recenterIfNeeded(marioPos)
 

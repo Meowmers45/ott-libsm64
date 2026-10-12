@@ -40,7 +40,18 @@ class MinigameRulesPanel(StateData.StateData):
         del self.playButton
         del self.timer
 
+    def fitToWindow(self):
+        # the rules banner spans a 4:3 screen; stretch it across wide windows, keeping the button and timer at its end
+        from toontown.toonbase.HudAspectAdjuster import widescreenFactor
+        factor = widescreenFactor()
+        self.frame['image_scale'] = (factor, 1, 1)
+        self.frame.setX(0.1375 * factor)
+        self.playButton.setX(1.0025 * factor)
+        self.timer.setX(0.997 * factor)
+
     def enter(self):
+        self.fitToWindow()
+        self.accept('aspectRatioChanged', self.fitToWindow)
         self.frame.show()
         self.timer.countdown(self.TIMEOUT, self.playCallback)
         self.accept('enter', self.playCallback)
@@ -49,6 +60,7 @@ class MinigameRulesPanel(StateData.StateData):
         self.frame.hide()
         self.timer.stop()
         self.ignore('enter')
+        self.ignore('aspectRatioChanged')
 
     def playCallback(self):
         messenger.send(self.doneEvent)

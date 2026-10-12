@@ -85,6 +85,11 @@ assert len(manager.marios) == 1 and base.taskMgr.hasTaskNamed(SM64Manager.SM64Ma
 mario.setControllerInput(1, 0, True, False, False)
 mario.setCameraPos(Point3(0, -10, 4))
 assert mario.inputs.camLookZ > 0  # camera behind Mario (-Y panda == +Z sm64): look vector cam->mario points +Z
+# steering reference from a view heading: heading 180 (facing -Y) -> camera sits at +Y -> SM64 -Z
+mario.setCameraYaw(180.0)
+assert mario.inputs.camLookZ < 0 and abs(mario.inputs.camLookX) < 1e-6
+mario.setCameraYaw(0.0)  # facing +Y -> camera at -Y -> SM64 +Z, consistent with setCameraPos above
+assert mario.inputs.camLookZ > 0 and abs(mario.inputs.camLookX) < 1e-6
 mario.tick()
 assert mario.state.action == 0x03000880
 pos = mario.getPandaPos()
