@@ -4,8 +4,11 @@ from direct.showbase.DirectObject import DirectObject
 from direct.task import Task
 from direct.task.TaskManagerGlobal import taskMgr
 from direct.showbase.MessengerGlobal import messenger
+from direct.showbase.ShowBaseGlobal import globalClock
 from panda3d.core import KeyboardButton
-from libsm64 import SM64Globals
+from libsm64 import SM64Globals, SM64Bindings
+
+SLEEP_ACTIONS = (SM64Bindings.ACT_START_SLEEPING, SM64Bindings.ACT_SLEEPING)
 
 # Keys are polled (not event-driven) so held modifiers like Ctrl never swallow the arrow keys
 BUTTON_A = (KeyboardButton.control(), KeyboardButton.lcontrol(), KeyboardButton.rcontrol())  # jump
@@ -166,11 +169,14 @@ class LocalMarioController(DirectObject):
             toon.controlManager.disable()
         mario.setControllerInput(stickX, stickY, a, b, z)
         mario.setCameraPos(builtins.base.camera.getPos(render))
-        # Mario moving (input or SM64 velocity) counts as the Toon moving, so idle sleep works as usual
-        vel = mario.state.velocity
-        if stickX or stickY or a or b or z or abs(mario.state.forwardVelocity) > 1.0 or \
-                abs(vel[0]) + abs(vel[1]) + abs(vel[2]) > 1.0:
-            toon.wakeUp()
+        # The Toon sleeps exactly when Mario does (SM64's idle nap), and wakes when he wakes
+        if mario.state.action in SLEEP_ACTIONS:
+            if not getattr(toon, 'sleepFlag', 0) and toon.hp > 0:
+                toon.forceGotoSleep()
+        else:
+            toon.lastMoved = globalClock.getFrameTime()
+            if getattr(toon, 'sleepFlag', 0):
+                toon.wakeUp()
 
         # The hidden toon node follows Mario, so the Toontown camera and nametag follow him too.
         # Heading is locked to Mario's facing: the camera always sits behind him.
