@@ -117,6 +117,14 @@ source in /app so the player can switch between Mario and their Toon.
   level / lake bed / splash. Set `sm64-water 1` to re-enable swimming.
 - testing agent iteration_6 green
 
+## Iteration 17 (June 2026)
+- Mario attacks Cogs: DistributedSuit.__handleToonCollision ignores bumps while Mario is active unless
+  SM64Mario.isAttacking() (ACT_FLAG_ATTACKING bit 23: punch/kick/dive/slide kick/ground pound) -> battle starts
+- Return whisper: resumeMarioMode whispers TTLocalizer.SM64MarioBack ("It's-a me! Mario's back.") after restore
+- Startup gate: ToonBase.checkSM64Available (prc `sm64-required 1`) shows TTGlobalDialog with the missing lib/ROM
+  (SM64Manager.getMissingParts) and exits on OK instead of connecting; replaces the remote-Mario placeholder idea
+- testing agent iteration_7 green
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
