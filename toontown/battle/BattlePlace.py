@@ -29,12 +29,14 @@ class BattlePlace(Place.Place):
         self.ignore('enterBattle')
 
     def enterWaitForBattle(self):
+        base.localAvatar.exitMarioModeForBattle()
         base.localAvatar.b_setAnimState('neutral', 1)
 
     def exitWaitForBattle(self):
         pass
 
     def enterBattle(self, event):
+        base.localAvatar.exitMarioModeForBattle()
         if base.config.GetBool('want-qa-regression', 0):
             self.notify.info('QA-REGRESSION: COGBATTLE: Enter Battle')
         self.loader.music.stop()

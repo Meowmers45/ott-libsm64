@@ -137,6 +137,7 @@ class CogHQBossBattle(BattlePlace.BattlePlace):
         return
 
     def enterBattle(self, event):
+        base.localAvatar.exitMarioModeForBattle()
         mult = 1
         if self.bossCog:
             mult = ToontownBattleGlobals.getBossBattleCreditMultiplier(self.bossCog.battleNumber)

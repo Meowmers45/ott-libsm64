@@ -300,6 +300,13 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.setMarioMode(flag)
         self.d_setMarioMode(self.marioMode)
 
+    def exitMarioModeForBattle(self):
+        # Cogs only fight Toons: switch back automatically when a battle starts
+        if not self.marioMode:
+            return
+        self.b_setMarioMode(0)
+        self.setSystemMessage(0, 'Spellbook: Mario Mode ended - Cogs only battle Toons!', WhisperPopup.WTSystem)
+
     def d_setMarioMode(self, flag):
         self.sendUpdate('setMarioMode', [flag])
 

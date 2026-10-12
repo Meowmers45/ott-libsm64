@@ -53,6 +53,10 @@ class LocalMarioController(DirectObject):
         toon = self.toon
         toon.controlManager.disable()
         toon.controlManager.collisionsOff()
+        # keep the event sphere alive so cogs, doors and tunnels still react to Mario
+        walk = self.__getWalkControls()
+        if walk is not None:
+            builtins.base.cTrav.addCollider(walk.cEventSphereNodePath, walk.event)
         toon.stopGlitchKiller()
         pos = toon.getPos(builtins.render)
         if not self.manager.recenterIfNeeded(pos):
@@ -67,10 +71,22 @@ class LocalMarioController(DirectObject):
         self.controlling = False
         self.mario.setControllerInput(0, 0, 0, 0, 0)
         toon = self.toon
+        walk = self.__getWalkControls()
+        if walk is not None:
+            builtins.base.cTrav.removeCollider(walk.cEventSphereNodePath)
         if toon is not None and not toon.isEmpty() and toon.avatarControlsEnabled:
             toon.controlManager.enable()
             toon.controlManager.collisionsOn()
             toon.startGlitchKiller()
+
+    def __getWalkControls(self):
+        toon = self.toon
+        if toon is None or toon.isEmpty():
+            return None
+        walk = toon.controlManager.controls.get('walk')
+        if walk is None or not hasattr(walk, 'cEventSphereNodePath'):
+            return None
+        return walk
 
     def __chatIsActive(self):
         chatMgr = getattr(self.toon, 'chatMgr', None)

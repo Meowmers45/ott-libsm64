@@ -61,7 +61,8 @@ The normal Toontown camera follows Mario and slowly swings behind him while he r
 
 ## Known limitations
 
-* Mario can't use doors, tunnels or trolleys (trigger collisions are off while in Mario Mode);
-  switch back to your Toon first.
+* Cog battles automatically switch you back to your Toon (Cogs only battle Toons).
+* Doors, tunnels and cog contact still work in Mario Mode (the Toon's event sphere stays active),
+  but Mario can't be pushed by walls he doesn't collide with in libsm64 (e.g. invisible camera walls).
 * Moving platforms / elevators are not uploaded as dynamic surfaces.
 * SM64 audio is not hooked up yet.
