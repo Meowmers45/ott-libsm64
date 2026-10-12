@@ -38,6 +38,7 @@ from toontown.shtiker import TIPPage
 from toontown.quest import Quests
 from toontown.quest import QuestParser
 from toontown.toonbase.ToontownGlobals import *
+from libsm64.SM64Globals import headingToFaceAngle
 from toontown.toonbase import ToontownGlobals
 from toontown.toonbase import TTLocalizer
 from toontown.catalog import CatalogNotifyDialog
@@ -79,6 +80,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
             chatMgr = ToontownChatManager.ToontownChatManager(cr, self)
             talkAssistant = TTTalkAssistant.TTTalkAssistant()
             LocalAvatar.LocalAvatar.__init__(self, cr, chatMgr, talkAssistant, passMessagesThrough=True)
+            self.marioController = None
             self.soundRun = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_runloop.ogg')
             self.soundWalk = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_walkloop.ogg')
             self.soundWhisper = base.loader.loadSfx('phase_3.5/audio/sfx/GUI_whisper_3.ogg')
@@ -242,6 +244,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         from otp.friends import FriendInfo
 
     def disable(self):
+        self.setMarioMode(0)
         self.laffMeter.destroy()
         del self.laffMeter
         self.questMap.destroy()
@@ -276,6 +279,72 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
 
     def disableBodyCollisions(self):
         pass
+
+    # Mario mode (libsm64)
+    def toggleMarioMode(self):
+        from libsm64 import SM64Manager
+        manager = SM64Manager.get()
+        if self.marioMode:
+            self.b_setMarioMode(0)
+            return "Welcome back, Toon!"
+        if not manager.isAvailable():
+            return manager.getMissingMessage()
+        if not manager.ensureInit():
+            return 'libsm64 failed to initialize. Check the client log for details.'
+        self.b_setMarioMode(1)
+        if not self.marioMode:
+            return "Couldn't spawn Mario here: no ground was found under your Toon. Try another spot."
+        return "It's-a me, Mario! Arrows: move, Z: jump, X: punch, C: crouch, A/D: camera."
+
+    def b_setMarioMode(self, flag):
+        self.setMarioMode(flag)
+        self.d_setMarioMode(self.marioMode)
+
+    def d_setMarioMode(self, flag):
+        self.sendUpdate('setMarioMode', [flag])
+
+    def d_setMarioState(self, *args):
+        self.sendUpdate('setMarioState', list(args))
+
+    def applyMarioMode(self):
+        if self.marioMode:
+            if self.mario is not None:
+                return
+            from libsm64 import SM64Manager
+            from libsm64.SM64Mario import SM64Mario
+            from libsm64.LocalMarioController import LocalMarioController
+            manager = SM64Manager.get()
+            if not manager.ensureInit():
+                self.marioMode = 0
+                return
+            pos = self.getPos(render)
+            manager.recenter(pos)
+            mario = SM64Mario(manager, pos, isLocal=True)
+            if not mario.isValid():
+                mario.destroy()
+                self.marioMode = 0
+                return
+            mario.setFaceAngle(headingToFaceAngle(self.getH(render)))
+            self.mario = mario
+            self.marioController = LocalMarioController(self, mario, manager)
+            self.hideToonForMario()
+            if self.avatarControlsEnabled:
+                self.marioController.grabControls()
+        else:
+            if self.marioController is not None:
+                self.marioController.destroy()
+                self.marioController = None
+            self.destroyMario()
+
+    def enableAvatarControls(self):
+        LocalAvatar.LocalAvatar.enableAvatarControls(self)
+        if self.marioController is not None:
+            self.marioController.grabControls()
+
+    def disableAvatarControls(self):
+        if self.marioController is not None:
+            self.marioController.releaseControls()
+        LocalAvatar.LocalAvatar.disableAvatarControls(self)
 
     def delete(self):
         try:

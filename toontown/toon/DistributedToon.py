@@ -186,6 +186,9 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         self.gmNameTagColor = 'whiteGM'
         self.gmNameTagString = ''
         self.transitioning = False
+        self.marioMode = 0
+        self.mario = None
+        self.marioRetryTaskName = None
         return
 
     def disable(self):
@@ -224,6 +227,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
             self.tunnelTrack = None
         self.setTrophyScore(0)
         self.removeGMIcon()
+        self.destroyMario()
         if self.doId in self.cr.toons:
             del self.cr.toons[self.doId]
         DistributedPlayer.DistributedPlayer.disable(self)
@@ -254,6 +258,81 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         DistributedPlayer.DistributedPlayer.announceGenerate(self)
         if self.animFSM.getCurrentState().getName() == 'off':
             self.setAnimState('neutral')
+        if self.marioMode:
+            self.applyMarioMode()
+
+    # Mario mode (libsm64)
+    def setMarioMode(self, flag):
+        self.marioMode = flag
+        if self.isGenerated():
+            self.applyMarioMode()
+
+    def getMarioMode(self):
+        return self.marioMode
+
+    def isMario(self):
+        return self.marioMode and self.mario is not None and self.mario.isValid()
+
+    def applyMarioMode(self):
+        if self.marioMode:
+            self.__createRemoteMario()
+        else:
+            self.destroyMario()
+
+    def __createRemoteMario(self):
+        if self.mario is not None:
+            return
+        from libsm64 import SM64Manager
+        manager = SM64Manager.get()
+        if not manager.ensureInit():
+            return
+        if manager.surfaceCount == 0:
+            manager.recenter(self.getPos(render))
+        from libsm64.SM64Mario import SM64Mario
+        mario = SM64Mario(manager, self.getPos(render), isLocal=False)
+        if not mario.isValid():
+            mario.destroy()
+            self.__scheduleMarioRetry()
+            return
+        mario.setFollowNode(self)
+        self.mario = mario
+        self.hideToonForMario()
+
+    def __scheduleMarioRetry(self):
+        if self.marioRetryTaskName is None:
+            self.marioRetryTaskName = self.uniqueName('marioRetry')
+            taskMgr.doMethodLater(2.0, self.__marioRetry, self.marioRetryTaskName)
+
+    def __marioRetry(self, task):
+        self.marioRetryTaskName = None
+        if self.marioMode and self.mario is None:
+            self.__createRemoteMario()
+        return task.done
+
+    def destroyMario(self):
+        if self.marioRetryTaskName is not None:
+            taskMgr.remove(self.marioRetryTaskName)
+            self.marioRetryTaskName = None
+        if self.mario is not None:
+            self.mario.destroy()
+            self.mario = None
+        self.showToonAfterMario()
+
+    def hideToonForMario(self):
+        self.getGeomNode().hide()
+        if hasattr(self, 'dropShadow') and self.dropShadow is not None and not self.dropShadow.isEmpty():
+            self.dropShadow.hide()
+
+    def showToonAfterMario(self):
+        if self.isEmpty():
+            return
+        self.getGeomNode().show()
+        if hasattr(self, 'dropShadow') and self.dropShadow is not None and not self.dropShadow.isEmpty():
+            self.dropShadow.show()
+
+    def setMarioState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons):
+        if self.mario is not None and not self.mario.isLocal:
+            self.mario.setNetState(action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons)
 
     def _handleClientCleanup(self):
         if self.track != None:

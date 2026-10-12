@@ -39,6 +39,10 @@ To start the server and run the game locally, go to your platform directory (`wi
 
 Be sure to wait till the servers have finished booting before starting the next.  If done correctly, you should be able to make your toon and play the game!  There is no support for Magic Words (commands) yet, [but it is currently in the works!](https://github.com/open-toontown/open-toontown/projects/1)
 
+# Mario Mode (libsm64)
+Type `~mario` in chat to swap your Toon for Mario running on real Super Mario 64 physics (and `~mario` again to swap back).
+This requires building [libsm64](https://github.com/libsm64/libsm64) and supplying your own SM64 US ROM - see [`libsm64/README.md`](libsm64/README.md) for setup, controls and details.
+
 # Contributing
 Submitting issues and Pull Requests are encouraged and welcome.
 

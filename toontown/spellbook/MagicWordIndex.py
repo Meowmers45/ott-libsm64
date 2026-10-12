@@ -241,6 +241,19 @@ class ToggleRun(MagicWord):
         inputState.set('debugRunning', not inputState.isSet('debugRunning'))
         return "Run mode has been toggled."
 
+class Mario(MagicWord):
+    aliases = ["sm64", "mariomode", "toon"]
+    desc = "Switches between your Toon and Mario (powered by libsm64)."
+    advancedDesc = "This Magic Word toggles Mario Mode. While active, your Toon is replaced by Mario running on real " \
+                   "Super Mario 64 physics against the level's collision geometry. Requires libsm64 and a SM64 US " \
+                   "ROM in the libsm64 folder. Controls: arrow keys move, Z jumps, X punches, C crouches, A/D " \
+                   "rotate the camera. Use the word again to switch back to your Toon."
+    execLocation = MagicWordConfig.EXEC_LOC_CLIENT
+    affectRange = [MagicWordConfig.AFFECT_SELF]
+
+    def handleWord(self, invoker, avId, toon, *args):
+        return base.localAvatar.toggleMarioMode()
+
 class MaxToon(MagicWord):
     aliases = ["max", "idkfa"]
     desc = "Maxes your target toon."
