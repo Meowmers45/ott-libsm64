@@ -295,7 +295,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.b_setMarioMode(1)
         if not self.marioMode:
             return "Couldn't spawn Mario here: no ground was found under your Toon. Try another spot."
-        return "It's-a me, Mario! Arrows: move, Z: jump, X: punch, C: crouch, T: chat."
+        return "It's-a me, Mario! WASD/Arrows: move, Ctrl: jump, Delete: punch, C: crouch, T: chat."
 
     def b_setMarioMode(self, flag):
         self.setMarioMode(flag)

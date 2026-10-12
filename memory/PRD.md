@@ -59,6 +59,12 @@ source in /app so the player can switch between Mario and their Toon.
 - Chat no longer opens on keystrokes while Mario is controlled (chatEntry backgroundFocus forced 0, restored on
   release); `T` sends 'enterNormalChat' to open the chat box
 
+## Iteration 7 (June 2026)
+- Controls now polled via mouseWatcherNode.isButtonDown: Ctrl=A (jump), Delete=B, C=Z, arrows + WASD stick; Toon
+  controlManager forced disabled every frame while Mario is controlled
+- Camera: smart camera paused during Mario control; camera pinned at (0,-12,5) relative to toon looking at Mario's
+  head (prc sm64-camera-distance / sm64-camera-height); restored on release
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

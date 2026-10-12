@@ -32,19 +32,23 @@ sm64-collision-radius 400    # how far around you level collision is uploaded to
 The `etc/toon.dc` file gained two fields (`setMarioMode`, `setMarioState`), so the Astron,
 UberDOG, AI and client must all run from this updated source.
 
-## Controls (same as the libsm64-panda example)
+## Controls
+
+Keys are polled every frame while Mario is in play; the Toon's own keyboard controls are switched off
+for the duration and restored when you switch back.
 
 | Key            | Action        |
 | -------------- | ------------- |
-| Arrow keys     | Control stick |
-| `Z`            | A (jump)      |
-| `X`            | B (punch/dive)|
+| Arrow keys / `W` `A` `S` `D` | Control stick |
+| `Ctrl`         | A (jump)      |
+| `Delete`       | B (punch/dive)|
 | `C`            | Z (crouch)    |
 | `T`            | Open the chat box (typing no longer opens it while Mario is in play) |
 | `M`            | Toggle Mario / Toon (hotkey, `sm64-toggle-key`) |
 
-The Toontown camera is locked behind Mario: your Toon node's heading always equals Mario's facing,
-so Mario faces away from the camera no matter what.
+While Mario is in play Toontown's smart camera is paused and the camera is pinned behind Mario's
+head (`sm64-camera-distance` / `sm64-camera-height`), looking at him; your Toon node's heading always
+equals Mario's facing, so Mario faces away from the camera no matter what.
 
 ## Caps
 
