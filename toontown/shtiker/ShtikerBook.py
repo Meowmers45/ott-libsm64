@@ -51,6 +51,17 @@ class ShtikerBook(DirectFrame, StateData.StateData):
     def setSafeMode(self, setting):
         self.safeMode = setting
 
+    def fitToWindow(self):
+        # The book art is drawn for 4:3: stretch its pages across wide windows and keep the
+        # tabs and page arrows at the edges; page contents stay centred on their page.
+        from toontown.toonbase.HudAspectAdjuster import widescreenFactor
+        factor = widescreenFactor()
+        self['image_scale'] = (2 * factor, 1, 1.5)
+        self.resetFrameSize()
+        self.pageTabFrame.setX(0.93 * factor)
+        self.nextArrow.setX(0.838 * factor)
+        self.prevArrow.setX(-0.838 * factor)
+
     def enter(self):
         if base.config.GetBool('want-qa-regression', 0):
             self.notify.info('QA-REGRESSION: SHTICKERBOOK: Open')
@@ -70,6 +81,8 @@ class ShtikerBook(DirectFrame, StateData.StateData):
         NametagGlobals.setMax2dAlpha(1.0)
         self.__isOpen = 1
         self.__setButtonVisibility()
+        self.fitToWindow()
+        self.accept('aspectRatioChanged', self.fitToWindow)
         self.show()
         self.showPageArrows()
         if not self.safeMode:
@@ -85,6 +98,7 @@ class ShtikerBook(DirectFrame, StateData.StateData):
         if not self.entered:
             return
         self.entered = 0
+        self.ignore('aspectRatioChanged')
         messenger.send('stickerBookExited')
         base.playSfx(self.closeSound)
         self.pages[self.currPageIndex].exit()

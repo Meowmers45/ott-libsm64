@@ -87,6 +87,10 @@ source in /app so the player can switch between Mario and their Toon.
 - Loading screen background scaled uniformly to cover the window (ToontownLoadingScreen.fitBackground)
 - testing agent iteration_4: all green
 
+## Iteration 12 (June 2026)
+- Widescreen panels: HudAspectAdjuster.widescreenFactor(); ShtikerBook.fitToWindow (image_scale x, tabs/arrows at
+  edges, re-fit on 'aspectRatioChanged'); AvatarChooser.fitBackground stretches the Pick-A-Toon backdrop card
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

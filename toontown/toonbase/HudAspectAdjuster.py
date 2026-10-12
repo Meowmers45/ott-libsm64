@@ -5,6 +5,15 @@ from direct.task.TaskManagerGlobal import taskMgr
 DESIGN_ASPECT = 4.0 / 3.0
 
 
+def widescreenFactor():
+    """How much wider the window is than Toontown's 4:3 design (1.0 at 4:3, 1.333 at 16:9)."""
+    import builtins
+    aspect = builtins.base.getAspectRatio()
+    if aspect <= 0:
+        return 1.0
+    return aspect / DESIGN_ASPECT
+
+
 class HudAspectAdjuster:
     """Keeps Toontown's 4:3-designed HUD anchored to the window edges at any aspect ratio and keeps the
     camera's vertical field of view constant so the horizontal FOV widens with the window."""

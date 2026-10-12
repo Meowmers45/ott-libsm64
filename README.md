@@ -55,3 +55,5 @@ How you commit changes is your choice, but please include what you did and a bas
 # Window aspect ratio
 The window is no longer locked to 4:3: the view, field of view and HUD adapt to the window size
 (`toontown/toonbase/HudAspectAdjuster.py`, toggle with `hud-aspect-adjust` in `etc/Configrc.prc`).
+Full-screen panels (loading screen, Shtiker Book, Pick-A-Toon backdrop) stretch to fill wide windows;
+use `toontown.toonbase.HudAspectAdjuster.widescreenFactor()` to adapt other 4:3 panels.

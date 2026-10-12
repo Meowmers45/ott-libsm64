@@ -56,6 +56,8 @@ class AvatarChooser(StateData.StateData):
         if base.cr.loginInterface.supportsRelogin():
             self.logoutButton.show()
         self.pickAToonBG.reparentTo(base.camera)
+        self.fitBackground()
+        self.accept('aspectRatioChanged', self.fitBackground)
         choice = base.config.GetInt('auto-avatar-choice', -1)
         for panel in self.panelList:
             panel.show()
@@ -75,6 +77,11 @@ class AvatarChooser(StateData.StateData):
         self.logoutButton.hide()
         self.pickAToonBG.reparentTo(hidden)
         return None
+
+    def fitBackground(self):
+        # the backdrop card was sized for a 4:3 view; widen it with the window so no gaps show
+        from toontown.toonbase.HudAspectAdjuster import widescreenFactor
+        self.pickAToonBG.setScale(max(widescreenFactor(), 1.0), 1, 1)
 
     def load(self, isPaid):
         if self.isLoaded == 1:
