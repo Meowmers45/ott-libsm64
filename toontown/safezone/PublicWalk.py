@@ -24,6 +24,7 @@ class PublicWalk(Walk.Walk):
         self.accept('enterStickerBook', self.__handleStickerBookEntry)
         self.accept(OptionsPageHotkey, self.__handleOptionsEntry)
         base.localAvatar.laffMeter.start()
+        base.localAvatar.showMarioButton()
         base.localAvatar.beginAllowPies()
 
     def exit(self):
@@ -33,6 +34,7 @@ class PublicWalk(Walk.Walk):
         self.ignore('enterStickerBook')
         self.ignore(OptionsPageHotkey)
         base.localAvatar.laffMeter.stop()
+        base.localAvatar.hideMarioButton()
         base.localAvatar.endAllowPies()
 
     def __handleStickerBookEntry(self):

@@ -124,6 +124,8 @@ source in /app so the player can switch between Mario and their Toon.
 - Startup gate: ToonBase.checkSM64Available (prc `sm64-required 1`) shows TTGlobalDialog with the missing lib/ROM
   (SM64Manager.getMissingParts) and exits on OK instead of connecting; replaces the remote-Mario placeholder idea
 - testing agent iteration_7 green
+- Mario/Toon switch button (LocalToon.createMarioButton, quit_button gui, pos (-0.98,0,-0.92) next to the laff meter;
+  red "Mario" / blue "Toon", shown by PublicWalk enter, hidden on exit/disguise; shares requestMarioToggle with the hotkey)
 
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)

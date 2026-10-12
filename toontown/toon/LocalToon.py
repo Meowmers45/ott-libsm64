@@ -247,6 +247,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
 
     def disable(self):
         self.setMarioMode(0)
+        self.destroyMarioButton()
         self.laffMeter.destroy()
         del self.laffMeter
         self.questMap.destroy()
@@ -343,18 +344,55 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if index != -1 and self.marioMode:
             self.b_setMarioMode(0)
             self.setSystemMessage(0, 'Spellbook: Mario Mode ended - Mario does not wear Cog disguises!', WhisperPopup.WTSystem)
+        if index != -1:
+            self.hideMarioButton()
 
     def acceptMarioHotkey(self):
         if MarioToggleKey:
-            self.accept(MarioToggleKey, self.__handleMarioHotkey)
+            self.accept(MarioToggleKey, self.requestMarioToggle)
 
-    def __handleMarioHotkey(self):
+    def requestMarioToggle(self):
+        # Shared by the hotkey and the on-screen button
         chatMgr = getattr(self, 'chatMgr', None)
         if chatMgr is not None and hasattr(chatMgr, 'fsm') and chatMgr.fsm.getCurrentState().getName() != 'mainMenu':
             return
         if not (self.marioMode or self.avatarControlsEnabled):
             return
         self.setSystemMessage(0, 'Spellbook: ' + self.toggleMarioMode(), WhisperPopup.WTSystem)
+
+    # On-screen Mario/Toon switch next to the laff meter (shown while walking, like the book button)
+    def createMarioButton(self):
+        gui = loader.loadModel('phase_3/models/gui/quit_button')
+        self.marioButton = DirectButton(parent=aspect2d, relief=None, image=(gui.find('**/QuitBtn_UP'), gui.find('**/QuitBtn_DN'), gui.find('**/QuitBtn_RLVR')), image_scale=(0.62, 1, 0.75), image_color=(0.85, 0.15, 0.1, 1), text='', text_scale=0.045, text_fg=(1, 1, 1, 1), text_shadow=(0, 0, 0, 1), text_pos=(0, -0.013), text_font=ToontownGlobals.getInterfaceFont(), pos=(-0.98, 0, -0.92), sortOrder=100, command=self.requestMarioToggle)
+        self.marioButton.setName('marioToggleButton')
+        gui.removeNode()
+        self.marioButton.hide()
+        self.updateMarioButton()
+
+    def updateMarioButton(self):
+        button = getattr(self, 'marioButton', None)
+        if button is None:
+            return
+        if self.marioMode:
+            button['text'] = TTLocalizer.SM64ButtonToon
+            button['image_color'] = (0.25, 0.55, 0.95, 1)
+        else:
+            button['text'] = TTLocalizer.SM64ButtonMario
+            button['image_color'] = (0.85, 0.15, 0.1, 1)
+
+    def showMarioButton(self):
+        if getattr(self, 'marioButton', None) is not None and not self.isDisguised:
+            self.updateMarioButton()
+            self.marioButton.show()
+
+    def hideMarioButton(self):
+        if getattr(self, 'marioButton', None) is not None:
+            self.marioButton.hide()
+
+    def destroyMarioButton(self):
+        if getattr(self, 'marioButton', None) is not None:
+            self.marioButton.destroy()
+            self.marioButton = None
 
     def d_setMarioMode(self, flag):
         self.sendUpdate('setMarioMode', [flag])
@@ -363,6 +401,10 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.sendUpdate('setMarioState', list(args))
 
     def applyMarioMode(self):
+        self.__applyMarioMode()
+        self.updateMarioButton()
+
+    def __applyMarioMode(self):
         if self.marioMode:
             if self.mario is not None:
                 return
@@ -501,6 +543,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         else:
             self.laffMeter.setPos(-1.2, 0.0, -0.87)
         self.laffMeter.stop()
+        self.createMarioButton()
         self.questMap = QuestMap.QuestMap(self)
         self.questMap.stop()
         if not base.cr.isPaid():
