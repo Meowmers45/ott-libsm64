@@ -111,6 +111,7 @@ sm64-collision-radius 400
 sm64-toggle-key m
 sm64-camera-distance 12
 sm64-camera-height 5
+sm64-camera-follow-rate 10
 sm64-audio 1
 sm64-sfx-volume 0.7
 sm64-dynamic-node-patterns elevator trolley platform lift goon crate

@@ -91,6 +91,11 @@ source in /app so the player can switch between Mario and their Toon.
 - Widescreen panels: HudAspectAdjuster.widescreenFactor(); ShtikerBook.fitToWindow (image_scale x, tabs/arrows at
   edges, re-fit on 'aspectRatioChanged'); AvatarChooser.fitBackground stretches the Pick-A-Toon backdrop card
 
+## Iteration 13 (June 2026)
+- Camera jitter on turning fixed: steering heading latched on key press (SM64Mario.setCameraYaw), view heading eases
+  to Mario facing (sm64-camera-follow-rate 10/s); testing agent iteration_5 green
+- MinigameRulesPanel.fitToWindow stretches the rules banner for widescreen
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
