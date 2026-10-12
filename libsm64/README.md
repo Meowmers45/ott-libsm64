@@ -40,10 +40,11 @@ UberDOG, AI and client must all run from this updated source.
 | `Z`            | A (jump)      |
 | `X`            | B (punch/dive)|
 | `C`            | Z (crouch)    |
-| `A` / `D`      | Rotate camera |
+| `T`            | Open the chat box (typing no longer opens it while Mario is in play) |
 | `M`            | Toggle Mario / Toon (hotkey, `sm64-toggle-key`) |
 
-The normal Toontown camera follows Mario and slowly swings behind him while he runs.
+The Toontown camera is locked behind Mario: your Toon node's heading always equals Mario's facing,
+so Mario faces away from the camera no matter what.
 
 ## Caps
 

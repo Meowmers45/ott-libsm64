@@ -3,7 +3,7 @@ from direct.directnotify import DirectNotifyGlobal
 from direct.showbase.DirectObject import DirectObject
 from direct.task import Task
 from direct.task.TaskManagerGlobal import taskMgr
-from direct.showbase.ShowBaseGlobal import globalClock
+from direct.showbase.MessengerGlobal import messenger
 from libsm64 import SM64Globals
 
 # Matches the libsm64-panda example controls
@@ -11,10 +11,7 @@ KEY_A = 'z'
 KEY_B = 'x'
 KEY_Z = 'c'
 KEY_STICK = {'arrow_left': (1, 0), 'arrow_right': (-1, 0), 'arrow_up': (0, 1), 'arrow_down': (0, -1)}
-KEY_CAM_LEFT = 'a'
-KEY_CAM_RIGHT = 'd'
-CAMERA_FOLLOW_SPEED = 60.0
-CAMERA_TURN_SPEED = 120.0
+KEY_CHAT = 't'
 
 
 class LocalMarioController(DirectObject):
@@ -31,14 +28,38 @@ class LocalMarioController(DirectObject):
         self.lastSentAnim = None
         self.lastSentFlags = None
         self.taskName = toon.uniqueName('marioController')
-        for key in [KEY_A, KEY_B, KEY_Z, KEY_CAM_LEFT, KEY_CAM_RIGHT] + list(KEY_STICK.keys()):
+        for key in [KEY_A, KEY_B, KEY_Z] + list(KEY_STICK.keys()):
             self.keys[key] = False
             self.accept(key, self.__setKey, [key, True])
             self.accept(key + '-up', self.__setKey, [key, False])
+        self.accept(KEY_CHAT, self.__openChat)
         taskMgr.add(self.__update, self.taskName, sort=31)
 
     def __setKey(self, key, value):
         self.keys[key] = value
+
+    def __getChatEntry(self):
+        chatMgr = getattr(self.toon, 'chatMgr', None)
+        inputNormal = getattr(chatMgr, 'chatInputNormal', None)
+        return getattr(inputNormal, 'chatEntry', None)
+
+    def __suppressTypeToChat(self):
+        # Toontown opens the chat box on any keystroke ("background focus"); keep Z/X/C for Mario
+        entry = self.__getChatEntry()
+        if entry is not None and entry['backgroundFocus']:
+            entry['backgroundFocus'] = 0
+
+    def __restoreTypeToChat(self):
+        chatMgr = getattr(self.toon, 'chatMgr', None)
+        entry = self.__getChatEntry()
+        if entry is None or not getattr(chatMgr, 'wantBackgroundFocus', 0):
+            return
+        if chatMgr.fsm.getCurrentState().getName() == 'mainMenu':
+            entry['backgroundFocus'] = 1
+
+    def __openChat(self):
+        if self.controlling and not self.__chatIsActive():
+            messenger.send('enterNormalChat')
 
     def destroy(self):
         self.releaseControls()
@@ -65,12 +86,14 @@ class LocalMarioController(DirectObject):
         self.mario.warpTo(pos)
         self.mario.spawnPos = pos
         self.mario.setFaceAngle(SM64Globals.headingToFaceAngle(toon.getH(builtins.render)))
+        self.__suppressTypeToChat()
 
     def releaseControls(self):
         if not self.controlling:
             return
         self.controlling = False
         self.mario.setControllerInput(0, 0, 0, 0, 0)
+        self.__restoreTypeToChat()
         toon = self.toon
         walk = self.__getWalkControls()
         if walk is not None:
@@ -104,32 +127,23 @@ class LocalMarioController(DirectObject):
             mario.warpTo(toon.getPos(render))
             return Task.cont
 
-        dt = globalClock.getDt()
         if self.__chatIsActive():
             stickX = stickY = 0
-            a = b = z = camLeft = camRight = False
+            a = b = z = False
         else:
+            self.__suppressTypeToChat()
             stickX = sum(KEY_STICK[k][0] for k in KEY_STICK if self.keys[k])
             stickY = sum(KEY_STICK[k][1] for k in KEY_STICK if self.keys[k])
             a, b, z = self.keys[KEY_A], self.keys[KEY_B], self.keys[KEY_Z]
-            camLeft, camRight = self.keys[KEY_CAM_LEFT], self.keys[KEY_CAM_RIGHT]
         mario.setControllerInput(stickX, stickY, a, b, z)
         mario.setCameraPos(builtins.base.camera.getPos(render))
 
-        # The hidden toon node follows Mario, so the Toontown camera and nametag follow him too
+        # The hidden toon node follows Mario, so the Toontown camera and nametag follow him too.
+        # Heading is locked to Mario's facing: the camera always sits behind him.
         marioPos = mario.getPandaPos()
         toon.setPos(render, marioPos)
+        toon.setH(render, mario.getHeading())
         self.manager.recenterIfNeeded(marioPos)
-        heading = toon.getH(render)
-        if camLeft:
-            heading += CAMERA_TURN_SPEED * dt
-        if camRight:
-            heading -= CAMERA_TURN_SPEED * dt
-        if (stickX or stickY) and mario.state.forwardVelocity > 8.0:
-            diff = (mario.getHeading() - heading + 180.0) % 360.0 - 180.0
-            step = CAMERA_FOLLOW_SPEED * dt
-            heading += max(-step, min(step, diff))
-        toon.setH(render, heading)
 
         self.__maybeSendNetState()
         return Task.cont

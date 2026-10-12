@@ -54,6 +54,11 @@ source in /app so the player can switch between Mario and their Toon.
   (onMarioEnteredWater/onMarioLeftWater/onMarioDestroyed); libsm64/MarioSplash.py installs a handler that plays
   toontown.effects.Splash + AV_jump_in_water at the surface (installed from DistributedToon/LocalToon on Mario spawn)
 
+## Iteration 6 (June 2026)
+- Camera locked behind Mario: toon heading = Mario facing each frame (A/D camera keys + lazy follow removed)
+- Chat no longer opens on keystrokes while Mario is controlled (chatEntry backgroundFocus forced 0, restored on
+  release); `T` sends 'enterNormalChat' to open the chat box
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
