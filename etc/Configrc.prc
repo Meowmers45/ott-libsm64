@@ -107,3 +107,7 @@ sm64-lib-dir libsm64
 sm64-rom-path libsm64/sm64.z64
 sm64-scale 50
 sm64-collision-radius 400
+sm64-toggle-key m
+sm64-audio 1
+sm64-sfx-volume 0.7
+sm64-dynamic-node-patterns elevator trolley platform lift goon crate

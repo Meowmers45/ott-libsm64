@@ -29,6 +29,7 @@ class LocalMarioController(DirectObject):
         self.lastSentTick = -1
         self.lastSentAction = None
         self.lastSentAnim = None
+        self.lastSentFlags = None
         self.taskName = toon.uniqueName('marioController')
         for key in [KEY_A, KEY_B, KEY_Z, KEY_CAM_LEFT, KEY_CAM_RIGHT] + list(KEY_STICK.keys()):
             self.keys[key] = False
@@ -138,10 +139,12 @@ class LocalMarioController(DirectObject):
         if mario.tickCount == self.lastSentTick:
             return
         state = mario.state
-        changed = state.action != self.lastSentAction or state.animID != self.lastSentAnim
+        changed = state.action != self.lastSentAction or state.animID != self.lastSentAnim or \
+            state.flags != self.lastSentFlags
         if not changed and mario.tickCount - self.lastSentTick < SM64Globals.NET_SEND_EVERY_TICKS:
             return
         self.lastSentTick = mario.tickCount
         self.lastSentAction = state.action
         self.lastSentAnim = state.animID
+        self.lastSentFlags = state.flags
         self.toon.d_setMarioState(*mario.getNetState())

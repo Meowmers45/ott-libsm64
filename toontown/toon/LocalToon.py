@@ -38,7 +38,7 @@ from toontown.shtiker import TIPPage
 from toontown.quest import Quests
 from toontown.quest import QuestParser
 from toontown.toonbase.ToontownGlobals import *
-from libsm64.SM64Globals import headingToFaceAngle
+from libsm64.SM64Globals import headingToFaceAngle, TOGGLE_KEY as MarioToggleKey
 from toontown.toonbase import ToontownGlobals
 from toontown.toonbase import TTLocalizer
 from toontown.catalog import CatalogNotifyDialog
@@ -241,6 +241,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if base.wantNametags:
             self.nametag.manage(base.marginManager)
         DistributedToon.DistributedToon.announceGenerate(self)
+        self.acceptMarioHotkey()
         from otp.friends import FriendInfo
 
     def disable(self):
@@ -306,6 +307,23 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
             return
         self.b_setMarioMode(0)
         self.setSystemMessage(0, 'Spellbook: Mario Mode ended - Cogs only battle Toons!', WhisperPopup.WTSystem)
+
+    def giveMarioCap(self, capName):
+        if not self.isMario():
+            return 'Switch to Mario first (~mario) before choosing a cap.'
+        return self.mario.giveCap(capName)
+
+    def acceptMarioHotkey(self):
+        if MarioToggleKey:
+            self.accept(MarioToggleKey, self.__handleMarioHotkey)
+
+    def __handleMarioHotkey(self):
+        chatMgr = getattr(self, 'chatMgr', None)
+        if chatMgr is not None and hasattr(chatMgr, 'fsm') and chatMgr.fsm.getCurrentState().getName() != 'mainMenu':
+            return
+        if not (self.marioMode or self.avatarControlsEnabled):
+            return
+        self.setSystemMessage(0, 'Spellbook: ' + self.toggleMarioMode(), WhisperPopup.WTSystem)
 
     def d_setMarioMode(self, flag):
         self.sendUpdate('setMarioMode', [flag])

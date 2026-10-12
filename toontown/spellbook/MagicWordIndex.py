@@ -243,16 +243,21 @@ class ToggleRun(MagicWord):
 
 class Mario(MagicWord):
     aliases = ["sm64", "mariomode", "toon"]
-    desc = "Switches between your Toon and Mario (powered by libsm64)."
+    desc = "Switches between your Toon and Mario (powered by libsm64), or gives Mario a cap."
     advancedDesc = "This Magic Word toggles Mario Mode. While active, your Toon is replaced by Mario running on real " \
                    "Super Mario 64 physics against the level's collision geometry. Requires libsm64 and a SM64 US " \
                    "ROM in the libsm64 folder. Controls: arrow keys move, Z jumps, X punches, C crouches, A/D " \
-                   "rotate the camera. Use the word again to switch back to your Toon."
+                   "rotate the camera. Use the word again to switch back to your Toon. While Mario is active, " \
+                   "pass 'wing', 'metal', 'vanish' or 'normal' to change his cap."
     execLocation = MagicWordConfig.EXEC_LOC_CLIENT
     affectRange = [MagicWordConfig.AFFECT_SELF]
+    arguments = [("cap", str, False, "")]
 
     def handleWord(self, invoker, avId, toon, *args):
-        return base.localAvatar.toggleMarioMode()
+        cap = args[0] if args else ""
+        if not cap:
+            return base.localAvatar.toggleMarioMode()
+        return base.localAvatar.giveMarioCap(cap)
 
 class MaxToon(MagicWord):
     aliases = ["max", "idkfa"]

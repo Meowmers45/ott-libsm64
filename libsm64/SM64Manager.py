@@ -6,7 +6,8 @@ from direct.task import Task
 from direct.task.TaskManagerGlobal import taskMgr
 from direct.showbase.ShowBaseGlobal import globalClock
 from direct.showbase.DirectObject import DirectObject
-from panda3d.core import Point3, Texture, PNMImage, SamplerState, Shader, Filename, CollisionPolygon
+from panda3d.core import Point3, Mat4, Texture, PNMImage, SamplerState, Shader, Filename, CollisionPolygon, \
+    UserDataAudio
 from libsm64 import SM64Bindings, SM64Globals
 
 _manager = None
@@ -21,6 +22,86 @@ def get():
     if _manager is None:
         _manager = SM64Manager()
     return _manager
+
+
+class DynamicSurfaceObject:
+    """A moving collision node (elevator, trolley...) mirrored as a libsm64 surface object."""
+
+    def __init__(self, manager, nodePath):
+        self.manager = manager
+        self.nodePath = nodePath
+        self.objectId = None
+        self.surfaces = None
+        self.transform = SM64Bindings.SM64ObjectTransform()
+        self.baseMat = None
+        self.create()
+
+    def __rotScale(self, mat):
+        m = Mat4(mat)
+        m.setRow(3, Point3(0, 0, 0))
+        return m
+
+    def __polygonTriangles(self, rotScale):
+        tris = []
+        cnode = self.nodePath.node()
+        for i in range(cnode.getNumSolids()):
+            solid = cnode.getSolid(i)
+            if not isinstance(solid, CollisionPolygon) or not solid.isTangible():
+                continue
+            pts = [rotScale.xformPoint(solid.getPoint(j)) for j in range(solid.getNumPoints())]
+            for j in range(1, len(pts) - 1):
+                tris.append((pts[0], pts[j], pts[j + 1]))
+        return tris
+
+    def create(self):
+        mat = self.nodePath.getMat(_render())
+        self.baseMat = self.__rotScale(mat)
+        tris = self.__polygonTriangles(self.baseMat)
+        if not tris:
+            return
+        self.surfaces = (SM64Bindings.SM64Surface * len(tris))()
+        origin = Point3(0, 0, 0)
+        for idx, tri in enumerate(tris):
+            s = self.surfaces[idx]
+            s.type = SM64Bindings.SURFACE_DEFAULT
+            s.terrain = SM64Bindings.TERRAIN_GRASS
+            for v in range(3):
+                x, y, z = SM64Globals.toSM64(tri[v], origin)
+                s.vertices[v][0], s.vertices[v][1], s.vertices[v][2] = int(x), int(y), int(z)
+        self.__fillTransform(mat.getRow3(3))
+        obj = SM64Bindings.SM64SurfaceObject()
+        obj.transform = self.transform
+        obj.surfaceCount = len(tris)
+        obj.surfaces = ct.cast(self.surfaces, ct.POINTER(SM64Bindings.SM64Surface))
+        self.objectId = self.manager.lib.sm64_surface_object_create(ct.byref(obj))
+        self.lastPos = Point3(mat.getRow3(3))
+
+    def __fillTransform(self, pandaPos):
+        x, y, z = self.manager.toSM64(pandaPos)
+        self.transform.position[0], self.transform.position[1], self.transform.position[2] = x, y, z
+        self.transform.eulerRotation[0] = self.transform.eulerRotation[1] = self.transform.eulerRotation[2] = 0.0
+
+    def update(self):
+        if self.nodePath.isEmpty() or self.nodePath.getTop() != _render():
+            self.destroy()
+            return False
+        mat = self.nodePath.getMat(_render())
+        rotScale = self.__rotScale(mat)
+        if self.objectId is None or not rotScale.almostEqual(self.baseMat, 0.001):
+            self.destroy()
+            self.create()
+            return True
+        pos = mat.getRow3(3)
+        if (pos - self.lastPos).lengthSquared() > 1e-8:
+            self.lastPos = Point3(pos)
+            self.__fillTransform(pos)
+            self.manager.lib.sm64_surface_object_move(self.objectId, ct.byref(self.transform))
+        return True
+
+    def destroy(self):
+        if self.objectId is not None:
+            self.manager.lib.sm64_surface_object_delete(self.objectId)
+            self.objectId = None
 
 
 class SM64Manager(DirectObject):
@@ -39,10 +120,19 @@ class SM64Manager(DirectObject):
         self.surfaceCount = 0
         self.lowestY = SM64Bindings.FLOOR_LOWER_LIMIT
         self.lastCollisionNodeCount = -1
+        self.staticMats = {}
+        self.dynamicKeys = set()
+        self.dynamicObjects = {}
         self.tickAccum = 0.0
         self.libPath = os.path.join(SM64Globals.LIB_DIR, SM64Bindings.getLibraryFilename())
         self.romPath = SM64Globals.ROM_PATH
         self._debugPrint = SM64Bindings.DebugPrintFunc(self.__onDebugPrint)
+        self.audioEnabled = False
+        self.audioStream = None
+        self.audioSound = None
+        self.audioBuffer = None
+        self.audioSamplesPushed = 0
+        self.audioStartTime = 0.0
 
     def __onDebugPrint(self, msg):
         self.notify.info('libsm64: %s' % msg.decode('utf-8', 'replace'))
@@ -79,6 +169,7 @@ class SM64Manager(DirectObject):
         if self.shader is None:
             self.notify.warning('Mario shader failed to compile; falling back to fixed-function rendering')
         self.initialized = True
+        self.__initAudio()
         self.notify.info('libsm64 initialized')
         return True
 
@@ -104,6 +195,48 @@ class SM64Manager(DirectObject):
         fsh = Filename.fromOsSpecific(os.path.join(shaderDir, 'mario.fsh'))
         return Shader.load(Shader.SL_GLSL, vertex=vsh, fragment=fsh)
 
+    # Audio: libsm64 renders SM64 sound effects into a PCM stream we feed to Panda
+    def __initAudio(self):
+        if not SM64Globals.AUDIO_ENABLED:
+            return
+        base = builtins.base
+        if not getattr(base, 'sfxManagerList', None):
+            return
+        try:
+            self.lib.sm64_audio_init(self.rom)
+            self.lib.sm64_set_sound_volume(SM64Globals.SFX_VOLUME)
+            self.audioStream = UserDataAudio(SM64Bindings.AUDIO_SAMPLE_RATE, 2, True)
+            self.audioSound = base.sfxManagerList[0].getSound(self.audioStream)
+            self.audioBuffer = (ct.c_int16 * (SM64Bindings.AUDIO_MAX_SAMPLES * 2 * 2))()
+            self.audioEnabled = True
+        except Exception as e:
+            self.notify.warning('SM64 audio unavailable: %s' % e)
+            self.audioEnabled = False
+
+    def __startAudio(self):
+        if not self.audioEnabled:
+            return
+        self.audioSamplesPushed = 0
+        self.audioStartTime = globalClock.getFrameTime()
+        self.audioSound.setLoop(False)
+        self.audioSound.setVolume(SM64Globals.SFX_VOLUME)
+        self.audioSound.play()
+
+    def __stopAudio(self):
+        if self.audioEnabled and self.audioSound is not None:
+            self.audioSound.stop()
+
+    def __tickAudio(self):
+        if not self.audioEnabled:
+            return
+        played = int((globalClock.getFrameTime() - self.audioStartTime) * SM64Bindings.AUDIO_SAMPLE_RATE)
+        queued = max(0, self.audioSamplesPushed - played)
+        numSamples = self.lib.sm64_audio_tick(queued, 1100, self.audioBuffer)
+        if numSamples:
+            # two stereo int16 batches of numSamples each
+            self.audioStream.append(ct.string_at(self.audioBuffer, numSamples * 2 * 4))
+            self.audioSamplesPushed += numSamples * 2
+
     # Coordinate helpers
     def toSM64(self, point):
         return SM64Globals.toSM64(point, self.origin)
@@ -122,18 +255,35 @@ class SM64Manager(DirectObject):
         return self.fromSM64(x, height, z)[2]
 
     # Level collision
+    def __isDynamicNode(self, np):
+        if np.getKey() in self.dynamicKeys:
+            return True
+        for ancestor in np.getAncestors():
+            name = ancestor.getName().lower()
+            if any(p in name for p in SM64Globals.DYNAMIC_NODE_PATTERNS):
+                return True
+        return False
+
     def __collectTriangles(self):
         tris = []
         mask = SM64Globals.CollisionMask
         radiusSq = SM64Globals.COLLISION_RADIUS * SM64Globals.COLLISION_RADIUS
         nodeCount = 0
         render = _render()
+        self.staticMats = {}
         for np in render.findAllMatches('**/+CollisionNode'):
             cnode = np.node()
             if (cnode.getIntoCollideMask() & mask).isZero():
                 continue
             nodeCount += 1
+            if self.__isDynamicNode(np):
+                key = np.getKey()
+                self.dynamicKeys.add(key)
+                if key not in self.dynamicObjects:
+                    self.dynamicObjects[key] = DynamicSurfaceObject(self, np)
+                continue
             mat = np.getMat(render)
+            self.staticMats[np.getKey()] = (np, Mat4(mat))
             for i in range(cnode.getNumSolids()):
                 solid = cnode.getSolid(i)
                 if not isinstance(solid, CollisionPolygon) or not solid.isTangible():
@@ -170,13 +320,25 @@ class SM64Manager(DirectObject):
         self.surfaceCount = len(tris)
         self.lowestY = lowest if tris else SM64Bindings.FLOOR_LOWER_LIMIT
         self.lib.sm64_static_surfaces_load(surfaces, len(tris))
-        self.notify.info('Loaded %d collision triangles from %d nodes (origin %s)' % (len(tris), nodeCount, self.origin))
+        self.notify.info('Loaded %d static triangles from %d nodes, %d moving objects (origin %s)' % (
+            len(tris), nodeCount, len(self.dynamicObjects), self.origin))
+
+    def __destroyDynamicObjects(self):
+        for obj in self.dynamicObjects.values():
+            obj.destroy()
+        self.dynamicObjects = {}
+
+    def __updateDynamicObjects(self):
+        for key in list(self.dynamicObjects.keys()):
+            if not self.dynamicObjects[key].update():
+                del self.dynamicObjects[key]
 
     def recenter(self, point):
         if not self.initialized:
             return
         marioPositions = [(m, m.getPandaPos()) for m in self.marios]
         self.origin = Point3(point)
+        self.__destroyDynamicObjects()
         self.loadSurfaces()
         mat = self.getConversionMat()
         for mario, pos in marioPositions:
@@ -193,11 +355,19 @@ class SM64Manager(DirectObject):
         if not self.marios:
             return Task.done
         count = 0
+        moved = False
         mask = SM64Globals.CollisionMask
-        for np in _render().findAllMatches('**/+CollisionNode'):
-            if not (np.node().getIntoCollideMask() & mask).isZero():
-                count += 1
-        if count != self.lastCollisionNodeCount:
+        render = _render()
+        for np in render.findAllMatches('**/+CollisionNode'):
+            if (np.node().getIntoCollideMask() & mask).isZero():
+                continue
+            count += 1
+            entry = self.staticMats.get(np.getKey())
+            if entry is not None and not np.getMat(render).almostEqual(entry[1], 0.001):
+                # a "static" node moved: promote it to a moving surface object
+                self.dynamicKeys.add(np.getKey())
+                moved = True
+        if moved or count != self.lastCollisionNodeCount:
             self.loadSurfaces()
         return Task.again
 
@@ -208,6 +378,7 @@ class SM64Manager(DirectObject):
         if not taskMgr.hasTaskNamed(self.TaskName):
             self.tickAccum = 0.0
             taskMgr.add(self.__tickTask, self.TaskName, sort=30)
+            self.__startAudio()
         if not taskMgr.hasTaskNamed(self.SurfaceTaskName):
             taskMgr.doMethodLater(SM64Globals.SURFACE_CHECK_INTERVAL, self.__surfaceCheckTask, self.SurfaceTaskName)
 
@@ -217,13 +388,17 @@ class SM64Manager(DirectObject):
         if not self.marios:
             taskMgr.remove(self.TaskName)
             taskMgr.remove(self.SurfaceTaskName)
+            self.__stopAudio()
+            self.__destroyDynamicObjects()
 
     def __tickTask(self, task):
         dt = globalClock.getDt()
         self.tickAccum = min(self.tickAccum + dt, SM64Globals.TICK_RATE * 3)
         while self.tickAccum >= SM64Globals.TICK_RATE:
             self.tickAccum -= SM64Globals.TICK_RATE
+            self.__updateDynamicObjects()
             # local Mario first so remote ones see fresh state
             for mario in sorted(self.marios, key=lambda m: not m.isLocal):
                 mario.tick()
+            self.__tickAudio()
         return Task.cont

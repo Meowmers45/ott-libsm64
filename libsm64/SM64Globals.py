@@ -1,5 +1,6 @@
 import math
-from panda3d.core import Point3, Mat4, BitMask32, ConfigVariableString, ConfigVariableDouble, ConfigVariableInt
+from panda3d.core import Point3, Mat4, BitMask32, ConfigVariableString, ConfigVariableDouble, ConfigVariableInt, \
+    ConfigVariableBool
 
 # Same values as OTPGlobals.WallBitmask / FloorBitmask (kept here so this package has no otp dependency)
 WallBitmask = BitMask32(1)
@@ -17,6 +18,14 @@ LIB_DIR = ConfigVariableString('sm64-lib-dir', 'libsm64').getValue()
 ROM_PATH = ConfigVariableString('sm64-rom-path', 'libsm64/sm64.z64').getValue()
 # Network state update rate for the local Mario (in 30hz ticks)
 NET_SEND_EVERY_TICKS = ConfigVariableInt('sm64-net-send-ticks', 3).getValue()
+# Key that toggles Mario Mode without typing the magic word ('' disables)
+TOGGLE_KEY = ConfigVariableString('sm64-toggle-key', 'm').getValue()
+# SM64 sound effects through libsm64's audio engine
+AUDIO_ENABLED = ConfigVariableBool('sm64-audio', True).getValue()
+SFX_VOLUME = ConfigVariableDouble('sm64-sfx-volume', 0.7).getValue()
+# Collision nodes whose ancestors match one of these (case-insensitive) names become moving surface objects
+DYNAMIC_NODE_PATTERNS = [p.lower() for p in ConfigVariableString(
+    'sm64-dynamic-node-patterns', 'elevator trolley platform lift goon crate').getValue().split()]
 
 MarioModeOff = 0
 MarioModeOn = 1

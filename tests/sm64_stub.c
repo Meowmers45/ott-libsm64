@@ -70,3 +70,23 @@ void sm64_set_mario_faceangle(int32_t id, float y) { g_marios[id].faceAngle = y;
 void sm64_set_mario_velocity(int32_t id, float x, float y, float z) { g_marios[id].velocity[0] = x; g_marios[id].velocity[1] = y; g_marios[id].velocity[2] = z; }
 void sm64_set_mario_forward_velocity(int32_t id, float v) { g_marios[id].forwardVelocity = v; }
 void sm64_set_mario_health(int32_t id, uint16_t h) { g_marios[id].health = h; }
+void sm64_set_mario_state(int32_t id, uint32_t f) { g_marios[id].flags = f; }
+void sm64_mario_interact_cap(int32_t id, uint32_t capFlag, uint16_t capTime, uint8_t playMusic) { g_marios[id].flags = (g_marios[id].flags & ~0x3Fu) | capFlag | 0x10; }
+
+struct SM64ObjectTransform { float position[3]; float eulerRotation[3]; };
+struct SM64SurfaceObject { struct SM64ObjectTransform transform; uint32_t surfaceCount; struct SM64Surface *surfaces; };
+static struct { int alive; uint32_t count; struct SM64ObjectTransform t; } g_objs[16];
+int g_objMoves = 0;
+uint32_t sm64_surface_object_create(const struct SM64SurfaceObject *o) {
+    for (uint32_t i = 0; i < 16; ++i) if (!g_objs[i].alive) { g_objs[i].alive = 1; g_objs[i].count = o->surfaceCount; g_objs[i].t = o->transform; return i; }
+    return 0;
+}
+void sm64_surface_object_move(uint32_t id, const struct SM64ObjectTransform *t) { g_objs[id].t = *t; g_objMoves++; }
+void sm64_surface_object_delete(uint32_t id) { g_objs[id].alive = 0; }
+int stub_object_alive_count(void) { int n = 0; for (int i = 0; i < 16; ++i) n += g_objs[i].alive; return n; }
+float stub_object_pos_x(uint32_t id) { return g_objs[id].t.position[0]; }
+
+static int g_audioInit = 0;
+void sm64_audio_init(const uint8_t *rom) { g_audioInit = 1; }
+uint32_t sm64_audio_tick(uint32_t queued, uint32_t desired, int16_t *buf) { if (!g_audioInit) return 0; uint32_t n = queued < desired ? 544 : 528; memset(buf, 0, n * 2 * 2 * sizeof(int16_t)); return n; }
+void sm64_set_sound_volume(float v) {}

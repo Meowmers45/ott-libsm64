@@ -13,6 +13,18 @@ ACT_IDLE = 0x0C400201
 ACT_FREEFALL = 0x0100088C
 ACT_SPAWN_SPIN_AIRBORNE = 0x00001924
 
+MARIO_NORMAL_CAP = 0x00000001
+MARIO_VANISH_CAP = 0x00000002
+MARIO_METAL_CAP = 0x00000004
+MARIO_WING_CAP = 0x00000008
+MARIO_CAP_ON_HEAD = 0x00000010
+MARIO_CAP_IN_HAND = 0x00000020
+MARIO_SPECIAL_CAPS = MARIO_VANISH_CAP | MARIO_METAL_CAP | MARIO_WING_CAP
+CAP_FLAGS = {'wing': MARIO_WING_CAP, 'metal': MARIO_METAL_CAP, 'vanish': MARIO_VANISH_CAP}
+
+AUDIO_SAMPLE_RATE = 32000
+AUDIO_MAX_SAMPLES = 544
+
 FLOOR_LOWER_LIMIT = -11000.0
 
 
@@ -22,6 +34,21 @@ class SM64Surface(ct.Structure):
         ('force', ct.c_int16),
         ('terrain', ct.c_uint16),
         ('vertices', (ct.c_int32 * 3) * 3),
+    ]
+
+
+class SM64ObjectTransform(ct.Structure):
+    _fields_ = [
+        ('position', ct.c_float * 3),
+        ('eulerRotation', ct.c_float * 3),
+    ]
+
+
+class SM64SurfaceObject(ct.Structure):
+    _fields_ = [
+        ('transform', SM64ObjectTransform),
+        ('surfaceCount', ct.c_uint32),
+        ('surfaces', ct.POINTER(SM64Surface)),
     ]
 
 
@@ -102,8 +129,18 @@ def loadLibrary(path):
     lib.sm64_set_mario_velocity.argtypes = [ct.c_int32, ct.c_float, ct.c_float, ct.c_float]
     lib.sm64_set_mario_forward_velocity.argtypes = [ct.c_int32, ct.c_float]
     lib.sm64_set_mario_health.argtypes = [ct.c_int32, ct.c_uint16]
+    lib.sm64_set_mario_state.argtypes = [ct.c_int32, ct.c_uint32]
+    lib.sm64_mario_interact_cap.argtypes = [ct.c_int32, ct.c_uint32, ct.c_uint16, ct.c_uint8]
     lib.sm64_surface_find_floor_height.argtypes = [ct.c_float, ct.c_float, ct.c_float]
     lib.sm64_surface_find_floor_height.restype = ct.c_float
+    lib.sm64_surface_object_create.argtypes = [ct.POINTER(SM64SurfaceObject)]
+    lib.sm64_surface_object_create.restype = ct.c_uint32
+    lib.sm64_surface_object_move.argtypes = [ct.c_uint32, ct.POINTER(SM64ObjectTransform)]
+    lib.sm64_surface_object_delete.argtypes = [ct.c_uint32]
+    lib.sm64_audio_init.argtypes = [ct.POINTER(ct.c_uint8)]
+    lib.sm64_audio_tick.argtypes = [ct.c_uint32, ct.c_uint32, ct.POINTER(ct.c_int16)]
+    lib.sm64_audio_tick.restype = ct.c_uint32
+    lib.sm64_set_sound_volume.argtypes = [ct.c_float]
     return lib
 
 

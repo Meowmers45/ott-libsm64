@@ -330,9 +330,11 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         if hasattr(self, 'dropShadow') and self.dropShadow is not None and not self.dropShadow.isEmpty():
             self.dropShadow.show()
 
-    def setMarioState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons):
+    def setMarioState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons,
+                      flags):
         if self.mario is not None and not self.mario.isLocal:
-            self.mario.setNetState(action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons)
+            self.mario.setNetState(action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY,
+                                   buttons, flags)
 
     def _handleClientCleanup(self):
         if self.track != None:

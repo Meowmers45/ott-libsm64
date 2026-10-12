@@ -41,8 +41,27 @@ UberDOG, AI and client must all run from this updated source.
 | `X`            | B (punch/dive)|
 | `C`            | Z (crouch)    |
 | `A` / `D`      | Rotate camera |
+| `M`            | Toggle Mario / Toon (hotkey, `sm64-toggle-key`) |
 
 The normal Toontown camera follows Mario and slowly swings behind him while he runs.
+
+## Caps
+
+While Mario is active: `~mario wing`, `~mario metal`, `~mario vanish` or `~mario normal`.
+Caps are networked, so other players see them too.
+
+## Sound
+
+libsm64's audio engine is initialised from the ROM and streamed into Panda's OpenAL sound system, so
+jumps, punches and Mario's voice play as in SM64 (including the cap music). Configure with
+`sm64-audio 0/1` and `sm64-sfx-volume 0.0-1.0`.
+
+## Moving platforms
+
+Collision nodes under props whose name contains one of `sm64-dynamic-node-patterns`
+(default: `elevator trolley platform lift goon crate`), plus any "static" collision node that is seen
+moving, are uploaded as libsm64 surface objects and updated every tick so Mario can ride them.
+Rotation is baked at creation time (rotating props are re-baked when their orientation changes).
 
 ## How it works
 
@@ -64,5 +83,5 @@ The normal Toontown camera follows Mario and slowly swings behind him while he r
 * Cog battles automatically switch you back to your Toon (Cogs only battle Toons).
 * Doors, tunnels and cog contact still work in Mario Mode (the Toon's event sphere stays active),
   but Mario can't be pushed by walls he doesn't collide with in libsm64 (e.g. invisible camera walls).
-* Moving platforms / elevators are not uploaded as dynamic surfaces.
-* SM64 audio is not hooked up yet.
+* Moving platforms use translation only; rotating props are re-baked rather than smoothly rotated.
+* Mario's attacks don't affect Cogs or Toons.

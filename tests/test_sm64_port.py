@@ -82,7 +82,40 @@ geom = mario.geomNode.getGeom(0)
 assert geom.getPrimitive(0).getNumVertices() == 6
 assert geom.getVertexData().getNumRows() == SM64Bindings.SM64_GEO_MAX_TRIANGLES * 3
 net = mario.getNetState()
-assert len(net) == 11 and net[10] == 1
+assert len(net) == 12 and net[10] == 1
+
+# caps
+assert 'Unknown cap' in mario.giveCap('propeller')
+mario.giveCap('wing')
+mario.tick()
+assert mario.state.flags & SM64Bindings.MARIO_WING_CAP
+mario.giveCap('normal')
+mario.tick()
+assert not (mario.state.flags & SM64Bindings.MARIO_SPECIAL_CAPS) and mario.state.flags & SM64Bindings.MARIO_NORMAL_CAP
+
+# moving platform: a collision node under an "elevator" prop becomes a libsm64 surface object that follows the node
+import ctypes as ct
+lib = manager.lib
+lib.stub_object_alive_count.restype = ct.c_int
+lib.stub_object_pos_x.argtypes = [ct.c_uint32]
+lib.stub_object_pos_x.restype = ct.c_float
+elevator = base.render.attachNewNode('elevator_prop')
+elevator.setPos(20, 0, 2)
+elevFloor = elevator.attachNewNode(CollisionNode('elevFloor'))
+elevFloor.node().setIntoCollideMask(SM64Globals.FloorBitmask)
+elevFloor.node().addSolid(CollisionPolygon(Point3(-2, -2, 0), Point3(2, -2, 0), Point3(2, 2, 0), Point3(-2, 2, 0)))
+manager.loadSurfaces()
+assert manager.surfaceCount == 2  # elevator polygons are NOT in the static set
+assert len(manager.dynamicObjects) == 1 and lib.stub_object_alive_count() == 1
+dyn = list(manager.dynamicObjects.values())[0]
+assert abs(lib.stub_object_pos_x(dyn.objectId) - 20 * SM64Globals.SCALE) < 1e-3
+elevator.setPos(25, 0, 2)
+mario.tick()  # ticks don't move objects; the manager's tick task does
+manager._SM64Manager__updateDynamicObjects()
+assert abs(lib.stub_object_pos_x(dyn.objectId) - 25 * SM64Globals.SCALE) < 1e-3
+elevator.removeNode()
+manager._SM64Manager__updateDynamicObjects()
+assert len(manager.dynamicObjects) == 0 and lib.stub_object_alive_count() == 0
 
 # remote mario follows a node & applies net state
 follow = base.render.attachNewNode('remoteToon')
@@ -90,9 +123,10 @@ follow.setPos(5, 5, 2)
 remote = SM64Mario(manager, Point3(5, 5, 2), isLocal=False)
 assert remote.isValid()
 remote.setFollowNode(follow)
-remote.setNetState(0x03000880, 7, 3, 1.0, 20.0, 1, 2, 3, 0.5, -0.5, 2)
+remote.setNetState(0x03000880, 7, 3, 1.0, 20.0, 1, 2, 3, 0.5, -0.5, 2, SM64Bindings.MARIO_METAL_CAP | 0x10)
 remote.tick()
 assert remote.state.animID == 7 and remote.state.action == 0x03000880
+assert remote.state.flags & SM64Bindings.MARIO_METAL_CAP
 assert remote.inputs.buttonB == 1 and remote.inputs.buttonA == 0
 rp = remote.getPandaPos()
 assert abs(rp.x - 4.9) < 1e-4 and abs(rp.y - 4.9) < 1e-4, rp
@@ -116,6 +150,14 @@ from toontown.spellbook import MagicWordIndex
 assert 'mario' in MagicWordIndex.magicWordIndex and 'toon' in MagicWordIndex.magicWordIndex
 dc = open('etc/toon.dc').read()
 assert 'setMarioMode(uint8) broadcast ram ownsend;' in dc
-assert 'setMarioState(' in dc
+assert 'setMarioState(uint32, int32, int16, int16/1000, int16/10, int16/10, int16/10, int16/10, int8/100, int8/100, uint8, uint32) broadcast ownsend;' in dc
+
+# audio plumbing (null audio manager in this headless run)
+assert manager.audioEnabled, 'audio should initialise with the stub'
+mario2 = SM64Mario(manager, Point3(0, 0, 2), isLocal=True)
+pushedBefore = manager.audioSamplesPushed
+manager._SM64Manager__tickAudio()
+assert manager.audioSamplesPushed > pushedBefore
+mario2.destroy()
 
 print('ALL SM64 PORT CHECKS PASSED')

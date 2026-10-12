@@ -115,8 +115,10 @@ class SM64Mario(NodePath):
     def setFollowNode(self, node):
         self.followNode = node
 
-    def setNetState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons):
-        self.netState = (action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons)
+    def setNetState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons,
+                    flags):
+        self.netState = (action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons,
+                         flags)
         self.netStateDirty = True
 
     def getNetState(self):
@@ -124,14 +126,31 @@ class SM64Mario(NodePath):
         buttons = self.inputs.buttonA | (self.inputs.buttonB << 1) | (self.inputs.buttonZ << 2)
         return (int(s.action), int(s.animID), int(s.animFrame), float(s.faceAngle), float(s.forwardVelocity),
                 float(s.velocity[0]), float(s.velocity[1]), float(s.velocity[2]),
-                float(self.inputs.stickX), float(self.inputs.stickY), buttons)
+                float(self.inputs.stickX), float(self.inputs.stickY), buttons, int(s.flags))
+
+    # Caps (wing / metal / vanish / normal)
+    def giveCap(self, capName):
+        capName = capName.lower()
+        if capName in ('normal', 'none', 'off'):
+            flags = (self.state.flags & ~SM64Bindings.MARIO_SPECIAL_CAPS) | SM64Bindings.MARIO_NORMAL_CAP | \
+                SM64Bindings.MARIO_CAP_ON_HEAD
+            self.lib.sm64_set_mario_state(self.marioId, flags)
+            self.state.flags = flags
+            return "Mario's cap is back to normal."
+        capFlag = SM64Bindings.CAP_FLAGS.get(capName)
+        if capFlag is None:
+            return 'Unknown cap "%s". Choose wing, metal, vanish or normal.' % capName
+        playMusic = 1 if self.manager.audioEnabled else 0
+        self.lib.sm64_mario_interact_cap(self.marioId, capFlag, 0, playMusic)
+        return 'Mario put on the %s cap!' % capName
 
     def __applyRemoteState(self):
         if self.followNode is not None and not self.followNode.isEmpty():
             self.warpTo(self.followNode.getPos(builtins.render), resetVelocity=False)
         if self.netState is None:
             return
-        action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons = self.netState
+        action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons, flags = \
+            self.netState
         self.setControllerInput(stickX, stickY, buttons & 1, buttons & 2, buttons & 4)
         self.lib.sm64_set_mario_faceangle(self.marioId, faceAngle)
         self.lib.sm64_set_mario_velocity(self.marioId, velX, velY, velZ)
@@ -140,6 +159,8 @@ class SM64Mario(NodePath):
             self.lib.sm64_set_mario_action(self.marioId, action)
             self.lastAppliedAction = action
         if self.netStateDirty:
+            if flags != self.state.flags:
+                self.lib.sm64_set_mario_state(self.marioId, flags)
             if animID != self.state.animID or animID != self.lastAppliedAnim:
                 self.lib.sm64_set_mario_animation(self.marioId, animID)
                 self.lastAppliedAnim = animID
