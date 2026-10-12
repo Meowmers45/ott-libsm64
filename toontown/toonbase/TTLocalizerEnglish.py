@@ -9764,3 +9764,5 @@ SM64MissingDialog = "Mario Mode needs libsm64 to show other players' Marios, but
 SM64MarioBack = "It's-a me! Mario's back."
 SM64ButtonMario = "Mario"
 SM64ButtonToon = "Toon"
+SM64ButtonMarioTip = "Switch to Mario"
+SM64ButtonToonTip = "Back to Toon"

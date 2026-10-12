@@ -125,7 +125,8 @@ source in /app so the player can switch between Mario and their Toon.
   (SM64Manager.getMissingParts) and exits on OK instead of connecting; replaces the remote-Mario placeholder idea
 - testing agent iteration_7 green
 - Mario/Toon switch button (LocalToon.createMarioButton, quit_button gui, pos (-0.98,0,-0.92) next to the laff meter;
-  red "Mario" / blue "Toon", shown by PublicWalk enter, hidden on exit/disguise; requestMarioToggle)
+  red "Mario" / blue "Toon", shown by PublicWalk enter, hidden on exit/disguise; requestMarioToggle);
+  hover tooltip DirectLabel "Switch to Mario" / "Back to Toon" bound to DGG.ENTER/EXIT (iteration 19)
 
 ## Iteration 18 (June 2026)
 - Removed the `M` toggle hotkey (`sm64-toggle-key`, SM64Globals.TOGGLE_KEY, LocalToon.acceptMarioHotkey); Mario is

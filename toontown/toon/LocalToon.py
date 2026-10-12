@@ -361,8 +361,22 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         self.marioButton = DirectButton(parent=aspect2d, relief=None, image=(gui.find('**/QuitBtn_UP'), gui.find('**/QuitBtn_DN'), gui.find('**/QuitBtn_RLVR')), image_scale=(0.62, 1, 0.75), image_color=(0.85, 0.15, 0.1, 1), text='', text_scale=0.045, text_fg=(1, 1, 1, 1), text_shadow=(0, 0, 0, 1), text_pos=(0, -0.013), text_font=ToontownGlobals.getInterfaceFont(), pos=(-0.98, 0, -0.92), sortOrder=100, command=self.requestMarioToggle)
         self.marioButton.setName('marioToggleButton')
         gui.removeNode()
+        # hover tooltip, Toontown style: appears above the button while the mouse is over it
+        self.marioButtonTip = DirectLabel(parent=self.marioButton, relief=None, text='', text_scale=0.05, text_fg=(1, 1, 1, 1), text_shadow=(0, 0, 0, 1), text_font=ToontownGlobals.getInterfaceFont(), pos=(0, 0, 0.1), sortOrder=101)
+        self.marioButtonTip.setName('marioToggleButtonTip')
+        self.marioButtonTip.hide()
+        self.marioButton.bind(DirectGuiGlobals.ENTER, self.__showMarioButtonTip)
+        self.marioButton.bind(DirectGuiGlobals.EXIT, self.__hideMarioButtonTip)
         self.marioButton.hide()
         self.updateMarioButton()
+
+    def __showMarioButtonTip(self, event = None):
+        if getattr(self, 'marioButtonTip', None) is not None:
+            self.marioButtonTip.show()
+
+    def __hideMarioButtonTip(self, event = None):
+        if getattr(self, 'marioButtonTip', None) is not None:
+            self.marioButtonTip.hide()
 
     def updateMarioButton(self):
         button = getattr(self, 'marioButton', None)
@@ -371,9 +385,11 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if self.marioMode:
             button['text'] = TTLocalizer.SM64ButtonToon
             button['image_color'] = (0.25, 0.55, 0.95, 1)
+            self.marioButtonTip['text'] = TTLocalizer.SM64ButtonToonTip
         else:
             button['text'] = TTLocalizer.SM64ButtonMario
             button['image_color'] = (0.85, 0.15, 0.1, 1)
+            self.marioButtonTip['text'] = TTLocalizer.SM64ButtonMarioTip
 
     def showMarioButton(self):
         if getattr(self, 'marioButton', None) is not None and not self.isDisguised:
@@ -383,11 +399,13 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
     def hideMarioButton(self):
         if getattr(self, 'marioButton', None) is not None:
             self.marioButton.hide()
+            self.__hideMarioButtonTip()
 
     def destroyMarioButton(self):
         if getattr(self, 'marioButton', None) is not None:
             self.marioButton.destroy()
             self.marioButton = None
+            self.marioButtonTip = None
 
     def d_setMarioMode(self, flag):
         self.sendUpdate('setMarioMode', [flag])
