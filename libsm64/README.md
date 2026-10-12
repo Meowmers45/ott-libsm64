@@ -80,6 +80,15 @@ the object's vertices.
   networked action/animation.
 * `toontown/spellbook/MagicWordIndex.py` – the `~mario` magic word.
 
+## Water
+
+Scene nodes whose name contains one of `sm64-water-node-patterns` (default `water pond`, minus
+`sm64-water-exclude-patterns`) are treated as SM64 water: the top of the node's bounds is the water
+surface over its footprint, and a lake bed is synthesised `sm64-water-depth` units below it where the
+level has no real floor. Mario dives, swims and surfaces in Donald's Dock's harbour, the Outdoor Zone
+lake and playground ponds; Toontown's own underwater fog/sound still triggers because the Toon node
+follows Mario.
+
 ## Known limitations
 
 * Cog battles automatically switch you back to your Toon (Cogs only battle Toons).

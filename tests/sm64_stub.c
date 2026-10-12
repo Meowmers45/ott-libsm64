@@ -70,6 +70,9 @@ void sm64_set_mario_faceangle(int32_t id, float y) { g_marios[id].faceAngle = y;
 void sm64_set_mario_velocity(int32_t id, float x, float y, float z) { g_marios[id].velocity[0] = x; g_marios[id].velocity[1] = y; g_marios[id].velocity[2] = z; }
 void sm64_set_mario_forward_velocity(int32_t id, float v) { g_marios[id].forwardVelocity = v; }
 void sm64_set_mario_health(int32_t id, uint16_t h) { g_marios[id].health = h; }
+static int g_waterLevel[8];
+void sm64_set_mario_water_level(int32_t id, int level) { g_waterLevel[id] = level; }
+int stub_mario_water_level(int32_t id) { return g_waterLevel[id]; }
 void sm64_set_mario_state(int32_t id, uint32_t f) { g_marios[id].flags = f; }
 void sm64_mario_interact_cap(int32_t id, uint32_t capFlag, uint16_t capTime, uint8_t playMusic) { g_marios[id].flags = (g_marios[id].flags & ~0x3Fu) | capFlag | 0x10; }
 

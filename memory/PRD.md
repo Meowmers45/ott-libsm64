@@ -44,6 +44,11 @@ source in /app so the player can switch between Mario and their Toon.
 - Smooth rotation for moving props: DynamicSurfaceObject bakes scale only and streams position + SM64 ZXY euler
   (sm64EulerFromHpr, verified against libsm64's mtxf_rotate_zxy_and_translate with 50 random HPR/scale cases)
 
+## Iteration 4 (June 2026)
+- Water swimming: SM64Manager collects water regions from named nodes (`sm64-water-node-patterns`), tight bounds give
+  surface + footprint, synthetic lake bed cells added to static surfaces; each Mario tick calls
+  sm64_set_mario_water_level with the level at Mario's XY (NO_WATER_LEVEL -10000 otherwise)
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

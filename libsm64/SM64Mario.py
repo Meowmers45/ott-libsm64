@@ -172,6 +172,7 @@ class SM64Mario(NodePath):
             return
         if not self.isLocal:
             self.__applyRemoteState()
+        self.lib.sm64_set_mario_water_level(self.marioId, self.manager.getWaterLevelSM64(self.getPandaPos()))
         self.lib.sm64_mario_tick(self.marioId, ct.byref(self.inputs), ct.byref(self.state), ct.byref(self.geo))
         self.tickCount += 1
         if self.isLocal:

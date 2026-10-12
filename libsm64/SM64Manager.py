@@ -152,6 +152,7 @@ class SM64Manager(DirectObject):
         self.staticMats = {}
         self.dynamicKeys = set()
         self.dynamicObjects = {}
+        self.waterRegions = []
         self.tickAccum = 0.0
         self.libPath = os.path.join(SM64Globals.LIB_DIR, SM64Bindings.getLibraryFilename())
         self.romPath = SM64Globals.ROM_PATH
@@ -283,6 +284,60 @@ class SM64Manager(DirectObject):
             return None
         return self.fromSM64(x, height, z)[2]
 
+    # Water: named scene nodes (ponds, harbours) become SM64 water with a synthetic lake bed
+    def __collectWaterRegions(self):
+        regions = []
+        render = _render()
+        seen = set()
+        for pattern in SM64Globals.WATER_NODE_PATTERNS:
+            for variant in (pattern, pattern.capitalize(), pattern.upper()):
+                for np in render.findAllMatches('**/*%s*' % variant):
+                    key = np.getKey()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    name = np.getName().lower()
+                    if any(ex in name for ex in SM64Globals.WATER_EXCLUDE_PATTERNS):
+                        continue
+                    mn, mx = Point3(), Point3()
+                    if not np.calcTightBounds(mn, mx, render):
+                        continue
+                    if mx.x - mn.x < 2.0 or mx.y - mn.y < 2.0:
+                        continue
+                    regions.append((mn.x, mn.y, mx.x, mx.y, mx.z))
+        return regions
+
+    def getWaterLevelSM64(self, pandaPos):
+        x, y = pandaPos[0], pandaPos[1]
+        for minX, minY, maxX, maxY, topZ in self.waterRegions:
+            if minX <= x <= maxX and minY <= y <= maxY:
+                return int((topZ - self.origin[2]) * SM64Globals.SCALE)
+        return SM64Globals.NO_WATER_LEVEL
+
+    def isInWater(self, pandaPos):
+        return self.getWaterLevelSM64(pandaPos) != SM64Globals.NO_WATER_LEVEL
+
+    def __waterBedTriangles(self):
+        tris = []
+        cell = 100.0
+        radiusSq = SM64Globals.COLLISION_RADIUS * SM64Globals.COLLISION_RADIUS
+        for minX, minY, maxX, maxY, topZ in self.waterRegions:
+            z = topZ - SM64Globals.WATER_DEPTH
+            x0 = minX
+            while x0 < maxX:
+                x1 = min(x0 + cell, maxX)
+                y0 = minY
+                while y0 < maxY:
+                    y1 = min(y0 + cell, maxY)
+                    center = Point3((x0 + x1) * 0.5, (y0 + y1) * 0.5, z)
+                    if (center - self.origin).lengthSquared() <= radiusSq:
+                        a, b, c, d = Point3(x0, y0, z), Point3(x1, y0, z), Point3(x1, y1, z), Point3(x0, y1, z)
+                        tris.append((a, b, c))
+                        tris.append((a, c, d))
+                    y0 = y1
+                x0 = x1
+        return tris
+
     # Level collision
     def __isDynamicNode(self, np):
         if np.getKey() in self.dynamicKeys:
@@ -332,6 +387,8 @@ class SM64Manager(DirectObject):
             return
         tris, nodeCount = self.__collectTriangles()
         self.lastCollisionNodeCount = nodeCount
+        self.waterRegions = self.__collectWaterRegions()
+        tris.extend(self.__waterBedTriangles())
         surfaces = (SM64Bindings.SM64Surface * max(len(tris), 1))()
         lowest = 1e9
         for idx, tri in enumerate(tris):
@@ -349,8 +406,8 @@ class SM64Manager(DirectObject):
         self.surfaceCount = len(tris)
         self.lowestY = lowest if tris else SM64Bindings.FLOOR_LOWER_LIMIT
         self.lib.sm64_static_surfaces_load(surfaces, len(tris))
-        self.notify.info('Loaded %d static triangles from %d nodes, %d moving objects (origin %s)' % (
-            len(tris), nodeCount, len(self.dynamicObjects), self.origin))
+        self.notify.info('Loaded %d static triangles from %d nodes, %d moving objects, %d water regions (origin %s)' % (
+            len(tris), nodeCount, len(self.dynamicObjects), len(self.waterRegions), self.origin))
 
     def __destroyDynamicObjects(self):
         for obj in self.dynamicObjects.values():

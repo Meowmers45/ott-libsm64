@@ -166,6 +166,36 @@ elevator.removeNode()
 manager._SM64Manager__updateDynamicObjects()
 assert len(manager.dynamicObjects) == 0 and lib.stub_object_alive_count() == 0
 
+# water: a node named *water* becomes SM64 water; its top is the surface and a lake bed is synthesised below
+from panda3d.core import CardMaker
+cm = CardMaker('pond_water')
+cm.setFrame(-10, 10, -10, 10)
+pond = base.render.attachNewNode(cm.generate())
+pond.setP(-90)
+pond.setPos(60, 60, 1.0)
+falls = base.render.attachNewNode(CardMaker('waterfall').generate())  # excluded by name
+falls.setPos(60, 60, 30)
+staticBefore = manager.surfaceCount
+manager.loadSurfaces()
+assert len(manager.waterRegions) == 1, manager.waterRegions
+assert manager.surfaceCount == staticBefore + 2  # 20x20 pond -> one bed cell -> 2 triangles
+expectedLevel = int((1.0 - manager.origin.z) * SM64Globals.SCALE)
+assert manager.getWaterLevelSM64(Point3(60, 60, 0)) == expectedLevel
+assert manager.getWaterLevelSM64(Point3(0, 0, 0)) == SM64Globals.NO_WATER_LEVEL
+lib.stub_mario_water_level.argtypes = [ct.c_int32]
+lib.stub_mario_water_level.restype = ct.c_int
+mario.warpTo(Point3(60, 60, 2))
+mario.setControllerInput(0, 0, False, False, False)
+mario.tick()
+assert lib.stub_mario_water_level(mario.marioId) == expectedLevel
+mario.warpTo(Point3(0, 0, 2))
+mario.tick()
+assert lib.stub_mario_water_level(mario.marioId) == SM64Globals.NO_WATER_LEVEL
+pond.removeNode()
+falls.removeNode()
+manager.loadSurfaces()
+assert not manager.waterRegions and manager.surfaceCount == staticBefore
+
 # remote mario follows a node & applies net state
 follow = base.render.attachNewNode('remoteToon')
 follow.setPos(5, 5, 2)

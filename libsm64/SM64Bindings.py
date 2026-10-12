@@ -129,6 +129,7 @@ def loadLibrary(path):
     lib.sm64_set_mario_velocity.argtypes = [ct.c_int32, ct.c_float, ct.c_float, ct.c_float]
     lib.sm64_set_mario_forward_velocity.argtypes = [ct.c_int32, ct.c_float]
     lib.sm64_set_mario_health.argtypes = [ct.c_int32, ct.c_uint16]
+    lib.sm64_set_mario_water_level.argtypes = [ct.c_int32, ct.c_int]
     lib.sm64_set_mario_state.argtypes = [ct.c_int32, ct.c_uint32]
     lib.sm64_mario_interact_cap.argtypes = [ct.c_int32, ct.c_uint32, ct.c_uint16, ct.c_uint8]
     lib.sm64_surface_find_floor_height.argtypes = [ct.c_float, ct.c_float, ct.c_float]
