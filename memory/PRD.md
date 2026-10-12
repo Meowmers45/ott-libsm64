@@ -33,7 +33,14 @@ source in /app so the player can switch between Mario and their Toon.
 - `tests/test_sm64_port.py` builds stub libsm64 (`tests/sm64_stub.c`) and runs headless Panda3D checks: PASS
 - DC parses; py_compile + ruff F clean on new code; testing agent iteration_1: no issues
 
+## Iteration 2 (June 2026)
+- Caps: `~mario wing|metal|vanish|normal` -> sm64_mario_interact_cap / sm64_set_mario_state; flags networked (setMarioState now 12 fields)
+- Moving platforms: DynamicSurfaceObject in SM64Manager (name patterns `sm64-dynamic-node-patterns` + motion-promoted static nodes), updated every tick via sm64_surface_object_move
+- Sound: sm64_audio_init/tick -> UserDataAudio stream on sfxManagerList[0]; prc `sm64-audio`, `sm64-sfx-volume`
+- Hotkey: `sm64-toggle-key` (default `m`) accepted in LocalToon.announceGenerate
+- tests/test_sm64_port.py extended; testing agent iteration_2: no issues
+
 ## Backlog
-- P1: in-game validation by user (shader colours, nametag height, camera feel); SM64 sound via sm64_audio_* 
+- P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
-- P2: hotkey toggle in addition to magic word; Mario cap powerups via magic word args
+- P2: smooth rotation for rotating props (use eulerRotation instead of re-bake)
