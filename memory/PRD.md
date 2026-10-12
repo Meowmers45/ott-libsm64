@@ -105,6 +105,18 @@ source in /app so the player can switch between Mario and their Toon.
   75 ticks or until input; Sleepy -> ACT_START_SLEEPING); remote Marios mirror via net state/emote hook
 - Laff bridge: LocalMarioController shows Mario health/0x880 * maxHp on laffMeter (adjustFace quietly), restored on release
 
+## Iteration 16 (June 2026)
+- Suspend/resume: Place.exitWalk -> LocalToon.suspendMarioMode() (marioMode off, marioSuspended=True); Place.enterWalk ->
+  resumeMarioMode() (re-enables only if suspended, not disguised, controls enabled). Covers Shtiker Book/Options,
+  every zone change (teleport/tunnel/door/elevator/died), NPC dialogs and Cog battles (exitMarioModeForBattle now
+  suspends). Explicit `~mario` toggle clears the pending resume; toggle refuses while controls are disabled.
+  PublicWalk no longer blocks the Book in Mario mode.
+- Continuous turning: LocalMarioController.steeringReference - left/right (and forward+side) measured against Mario's
+  live facing; only "back" latches the view heading (anti flip-flop). Regression in tests/test_sm64_port.py
+- Water off by default: prc `sm64-water 0` (SM64Globals.WATER_ENABLED); __collectWaterRegions returns [] so no water
+  level / lake bed / splash. Set `sm64-water 1` to re-enable swimming.
+- testing agent iteration_6 green
+
 ## Backlog
-- P1: in-game validation by user (shader colours, nametag height, camera feel, audio latency)
+- P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
