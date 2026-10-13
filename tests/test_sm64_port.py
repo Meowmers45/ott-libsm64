@@ -352,6 +352,11 @@ assert lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_HERE_WE_GO and lib.stub
 for _ in range(SM64Mario.VictoryTicks):
     mario3.tick()
 assert not mario3.isEmoting() and mario3.state.action == SM64Bindings.ACT_IDLE
+# defeat: slump + "Mamma mia!" after a lost battle
+mario3.playDefeatSlump()
+mario3.tick()
+assert mario3.state.action == SM64Bindings.ACT_UNINITIALIZED and mario3.state.animID == SM64Bindings.MARIO_ANIM_COUGHING
+assert lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_MAMA_MIA
 mario3.destroy()
 
 print('ALL SM64 PORT CHECKS PASSED')

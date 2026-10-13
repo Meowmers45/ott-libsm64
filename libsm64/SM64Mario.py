@@ -176,6 +176,11 @@ class SM64Mario(NodePath):
         self.playAnimation(SM64Bindings.MARIO_ANIM_STAR_DANCE, self.VictoryTicks)
         self.manager.playSound(SM64Bindings.SOUND_MARIO_HERE_WE_GO)
 
+    def playDefeatSlump(self):
+        # Hunched slump + "Mamma mia!" when Mario comes back after a lost battle
+        self.playAnimation(SM64Bindings.MARIO_ANIM_COUGHING, self.VictoryTicks)
+        self.manager.playSound(SM64Bindings.SOUND_MARIO_MAMA_MIA)
+
     def isEmoting(self):
         return self.emoteEndTick is not None
 

@@ -648,6 +648,9 @@ class Place(StateData, FriendsListManager):
 
         base.localAvatar.laffMeter.start()
         base.camera.wrtReparentTo(base.render)
+        if getattr(base.localAvatar, 'marioSuspended', False):
+            # Mario was parked for the battle we just lost: he slumps when he comes back
+            base.localAvatar.marioDefeatPending = True
         base.localAvatar.b_setAnimState('Died', 1, callback, [requestStatus])
         base.localAvatar.obscureMoveFurnitureButton(1)
 

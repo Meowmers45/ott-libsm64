@@ -83,6 +83,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
             self.marioController = None
             self.marioSuspended = False
             self.marioVictoryPending = False
+            self.marioDefeatPending = False
             self.soundRun = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_runloop.ogg')
             self.soundWalk = base.loader.loadSfx('phase_3.5/audio/sfx/AV_footstep_walkloop.ogg')
             self.soundWhisper = base.loader.loadSfx('phase_3.5/audio/sfx/GUI_whisper_3.ogg')
@@ -290,6 +291,7 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         # An explicit toggle always wins over a pending automatic restore (book / zone change)
         self.marioSuspended = False
         self.marioVictoryPending = False
+        self.marioDefeatPending = False
         if self.marioMode:
             self.b_setMarioMode(0)
             return "Welcome back, Toon!"
@@ -332,13 +334,16 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if self.marioMode or self.isDisguised or not self.avatarControlsEnabled:
             return
         self.b_setMarioMode(1)
-        victory = self.marioVictoryPending
-        self.marioVictoryPending = False
+        victory, defeat = self.marioVictoryPending, self.marioDefeatPending
+        self.marioVictoryPending = self.marioDefeatPending = False
         if not self.marioMode:
             return
         if victory and self.mario is not None:
             self.mario.playVictoryDance()
             self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioHereWeGo, WhisperPopup.WTSystem)
+        elif defeat and self.mario is not None:
+            self.mario.playDefeatSlump()
+            self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioMammaMia, WhisperPopup.WTSystem)
         else:
             self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioBack, WhisperPopup.WTSystem)
 

@@ -146,6 +146,10 @@ source in /app so the player can switch between Mario and their Toon.
   battle; LocalToon.resumeMarioMode then calls SM64Mario.playVictoryDance (MARIO_ANIM_STAR_DANCE 0xCD on the no-op
   action for 90 ticks via new playAnimation helper + SOUND_MARIO_HERE_WE_GO) and whispers "Here we go!"
 
+## Iteration 22 (June 2026)
+- Defeat pose: Place.enterDied sets marioDefeatPending when Mario was suspended; resumeMarioMode calls
+  SM64Mario.playDefeatSlump (MARIO_ANIM_COUGHING 0x30 hunched slump + SOUND_MARIO_MAMA_MIA) and whispers "Mamma mia!"
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
