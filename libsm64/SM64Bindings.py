@@ -18,6 +18,9 @@ ACT_SPAWN_SPIN_AIRBORNE = 0x00001924
 ACT_FLAG_ATTACKING = 1 << 23
 ACT_PUNCHING = 0x00800380
 ACT_GROUND_POUND = 0x008008A9
+# SM64 sound bits (sounds.h SOUND_ARG_LOAD incl. SOUND_STATUS_WAITING)
+SOUND_MENU_CLICK_FILE_SELECT = 0x70110081
+SOUND_ACTION_BONK = 0x0445A081
 
 MARIO_NORMAL_CAP = 0x00000001
 MARIO_VANISH_CAP = 0x00000002
@@ -148,6 +151,8 @@ def loadLibrary(path):
     lib.sm64_audio_tick.argtypes = [ct.c_uint32, ct.c_uint32, ct.POINTER(ct.c_int16)]
     lib.sm64_audio_tick.restype = ct.c_uint32
     lib.sm64_set_sound_volume.argtypes = [ct.c_float]
+    if hasattr(lib, 'sm64_play_sound_global'):
+        lib.sm64_play_sound_global.argtypes = [ct.c_int32]
     return lib
 
 

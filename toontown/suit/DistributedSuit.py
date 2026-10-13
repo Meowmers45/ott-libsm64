@@ -409,13 +409,27 @@ class DistributedSuit(DistributedSuitBase.DistributedSuitBase, DelayDeletable):
     def __handleToonCollision(self, collEntry):
         if not base.localAvatar.wantBattles:
             return
-        if base.localAvatar.isMario() and not base.localAvatar.mario.isAttacking():
-            # Mario only picks a fight when he lands a hit: plain bumps let him dodge the Cog
-            return
+        if base.localAvatar.isMario():
+            if not base.localAvatar.mario.isAttacking():
+                # Mario only picks a fight when he lands a hit: plain bumps let him dodge the Cog
+                return
+            self.__playMarioHitEffect()
         toonId = base.localAvatar.getDoId()
         self.notify.debug('Distributed suit: requesting a Battle with ' + 'toon: %d' % toonId)
         self.d_requestBattle(self.getPos(), self.getHpr())
         self.setState('WaitForBattle')
+
+    def __playMarioHitEffect(self):
+        # puff of dust on the Cog plus SM64's "bonk" the instant Mario's attack connects
+        from toontown.effects import DustCloud
+        from libsm64 import SM64Manager, SM64Bindings
+        dustCloud = DustCloud.DustCloud(fBillboard=0, wantSound=0)
+        dustCloud.setBillboardAxis(2.0)
+        dustCloud.setZ(self.height * 0.5)
+        dustCloud.setScale(0.5)
+        dustCloud.createTrack()
+        Sequence(Func(dustCloud.reparentTo, self), dustCloud.track, Func(dustCloud.destroy), name='marioHitDust-%d' % self.doId).start()
+        SM64Manager.get().playSound(SM64Bindings.SOUND_ACTION_BONK)
 
     def setAnimState(self, state):
         self.setState(state)

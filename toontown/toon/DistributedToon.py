@@ -323,6 +323,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         self.getGeomNode().hide()
         if hasattr(self, 'dropShadow') and self.dropShadow is not None and not self.dropShadow.isEmpty():
             self.dropShadow.hide()
+        self.setDisplayName(self.getName())
 
     def showToonAfterMario(self):
         if self.isEmpty():
@@ -330,6 +331,13 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
         self.getGeomNode().show()
         if hasattr(self, 'dropShadow') and self.dropShadow is not None and not self.dropShadow.isEmpty():
             self.dropShadow.show()
+        self.setDisplayName(self.getName())
+
+    def getMarioDisplayName(self, name):
+        # "(Playing As Mario)" in red under the Toon's name while Mario is in play
+        if self.isMario() and name == self.getName():
+            return name + '\n\1red\1' + TTLocalizer.SM64PlayingAsMario + '\2'
+        return name
 
     def setMarioState(self, action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY, buttons,
                       flags):
@@ -2163,6 +2171,7 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
             return 0
 
     def setDisplayName(self, str):
+        str = self.getMarioDisplayName(str)
         if self.getGameAccess() == OTPGlobals.AccessFull and not self.isDisguised:
             self.setFancyNametag(name=str)
         else:

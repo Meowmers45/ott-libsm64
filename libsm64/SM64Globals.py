@@ -26,6 +26,8 @@ CAMERA_FOLLOW_RATE = ConfigVariableDouble('sm64-camera-follow-rate', 10.0).getVa
 # SM64 sound effects through libsm64's audio engine
 AUDIO_ENABLED = ConfigVariableBool('sm64-audio', True).getValue()
 SFX_VOLUME = ConfigVariableDouble('sm64-sfx-volume', 0.7).getValue()
+# Seconds the SM64 audio stream keeps running after the last Mario is gone (lets exit sounds finish)
+AUDIO_LINGER = ConfigVariableDouble('sm64-audio-linger', 1.5).getValue()
 # Collision nodes whose ancestors match one of these (case-insensitive) names become moving surface objects
 DYNAMIC_NODE_PATTERNS = [p.lower() for p in ConfigVariableString(
     'sm64-dynamic-node-patterns', 'elevator trolley platform lift goon crate').getValue().split()]

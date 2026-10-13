@@ -132,6 +132,15 @@ source in /app so the player can switch between Mario and their Toon.
 - Removed the `M` toggle hotkey (`sm64-toggle-key`, SM64Globals.TOGGLE_KEY, LocalToon.acceptMarioHotkey); Mario is
   entered via the on-screen button or `~mario` only
 
+## Iteration 20 (June 2026)
+- SM64 sounds: SM64Bindings.sm64_play_sound_global + SOUND_MENU_CLICK_FILE_SELECT / SOUND_ACTION_BONK; SM64Manager.playSound
+  (starts tick+audio if needed; audio lingers `sm64-audio-linger` 1.5s via TickStopTaskName after the last Mario leaves)
+- Button click (LocalToon.requestMarioToggle) and Cog hit effect (DistributedSuit.__playMarioHitEffect: DustCloud + bonk)
+- Street segments: LocalMarioController drives toon.ccTravOnFloor (ccRay2 + camFloorCollisionBroadcaster) every frame
+  while controlling, so Street.enterZone ('on-floor') keeps firing with the smart camera paused
+- Nametag: DistributedToon.getMarioDisplayName appends "\n\1red\1(Playing As Mario)\2" (TTLocalizer.SM64PlayingAsMario)
+  through setDisplayName; refreshed in hideToonForMario/showToonAfterMario
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64

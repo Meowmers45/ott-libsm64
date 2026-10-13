@@ -110,8 +110,14 @@ client simulates them.
   talking to NPCs, Cog battles - Mario is parked and your Toon takes over; Mario comes back automatically
   as soon as you are walking again (unless you toggled `~mario` off yourself in between).
 * Street Cogs only start a battle when Mario actually hits them (punch, kick, dive, slide kick, ground
-  pound - any SM64 attacking action); plain bumps and Cogs walking into Mario do nothing, so he can dodge.
-  Mario is parked for the battle and returns ("It's-a me! Mario's back.") once you are walking again.
+  pound - any SM64 attacking action); the Cog puffs dust and SM64's "bonk" plays the instant the hit lands.
+  Plain bumps and Cogs walking into Mario do nothing, so he can dodge. Mario is parked for the battle and
+  returns ("It's-a me! Mario's back.") once you are walking again.
+* The Mario/Toon button next to the laff meter plays SM64's menu "click"; the audio stream lingers
+  `sm64-audio-linger` seconds (1.5) after Mario leaves so exit sounds finish.
+* Everyone sees "(Playing As Mario)" in red under your name on the nametag while Mario is in play.
+* Streets keep streaming their segments while you are Mario: the controller drives the Toon's floor ray
+  (the 'on-floor' events the smart camera normally produces) over Mario every frame.
 * Putting on a Cog disguise ends Mario Mode, and you can't enter Mario Mode while disguised.
 * The client refuses to connect without libsm64 + ROM (a dialog lists what is missing), because other
   players' Marios could not be shown otherwise. Set `sm64-required 0` in the prc to bypass this check.

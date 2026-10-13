@@ -137,6 +137,7 @@ class SM64Manager(DirectObject):
     notify = DirectNotifyGlobal.directNotify.newCategory('SM64Manager')
     TaskName = 'sm64-tick'
     SurfaceTaskName = 'sm64-surface-check'
+    TickStopTaskName = 'sm64-tick-stop'
 
     def __init__(self):
         self.lib = None
@@ -483,10 +484,7 @@ class SM64Manager(DirectObject):
     def registerMario(self, mario):
         if mario not in self.marios:
             self.marios.append(mario)
-        if not taskMgr.hasTaskNamed(self.TaskName):
-            self.tickAccum = 0.0
-            taskMgr.add(self.__tickTask, self.TaskName, sort=30)
-            self.__startAudio()
+        self.__startTicking()
         if not taskMgr.hasTaskNamed(self.SurfaceTaskName):
             taskMgr.doMethodLater(SM64Globals.SURFACE_CHECK_INTERVAL, self.__surfaceCheckTask, self.SurfaceTaskName)
 
@@ -495,10 +493,37 @@ class SM64Manager(DirectObject):
             self.marios.remove(mario)
         self.onMarioDestroyed(mario)
         if not self.marios:
-            taskMgr.remove(self.TaskName)
             taskMgr.remove(self.SurfaceTaskName)
-            self.__stopAudio()
             self.__destroyDynamicObjects()
+            # keep the audio stream alive briefly so a sound started on the way out (button click) is heard
+            self.__scheduleTickStop()
+
+    def playSound(self, soundBits):
+        # Play an SM64 sound effect (sounds.h bits) through libsm64's audio stream
+        if not self.initialized or not hasattr(self.lib, 'sm64_play_sound_global'):
+            return False
+        self.lib.sm64_play_sound_global(soundBits)
+        self.__startTicking()
+        if not self.marios:
+            self.__scheduleTickStop()
+        return True
+
+    def __startTicking(self):
+        taskMgr.remove(self.TickStopTaskName)
+        if not taskMgr.hasTaskNamed(self.TaskName):
+            self.tickAccum = 0.0
+            taskMgr.add(self.__tickTask, self.TaskName, sort=30)
+            self.__startAudio()
+
+    def __scheduleTickStop(self):
+        taskMgr.remove(self.TickStopTaskName)
+        taskMgr.doMethodLater(SM64Globals.AUDIO_LINGER, self.__tickStopTask, self.TickStopTaskName)
+
+    def __tickStopTask(self, task):
+        if not self.marios:
+            taskMgr.remove(self.TaskName)
+            self.__stopAudio()
+        return Task.done
 
     def __tickTask(self, task):
         dt = globalClock.getDt()

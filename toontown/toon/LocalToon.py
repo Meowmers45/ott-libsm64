@@ -354,6 +354,8 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
         if not (self.marioMode or self.avatarControlsEnabled):
             return
         self.setSystemMessage(0, 'Spellbook: ' + self.toggleMarioMode(), WhisperPopup.WTSystem)
+        from libsm64 import SM64Manager, SM64Bindings
+        SM64Manager.get().playSound(SM64Bindings.SOUND_MENU_CLICK_FILE_SELECT)
 
     # On-screen Mario/Toon switch next to the laff meter (shown while walking, like the book button)
     def createMarioButton(self):

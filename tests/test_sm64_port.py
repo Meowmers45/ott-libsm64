@@ -293,9 +293,21 @@ assert manager.surfaceCount == 0  # now culled
 assert (mario.getPandaPos() - before).length() < 1e-3
 manager.recenter(Point3(0, 0, 2))
 
+# sound effects: SM64 sound bits go through libsm64; the audio stream lingers after the last Mario leaves so
+# the Mario/Toon button click (and the Cog "bonk") is still heard
+lib.stub_last_sound.restype = ct.c_int32
+lib.stub_sound_count.restype = ct.c_int
+assert manager.playSound(SM64Bindings.SOUND_ACTION_BONK)
+assert lib.stub_last_sound() == SM64Bindings.SOUND_ACTION_BONK and lib.stub_sound_count() == 1
 mario.destroy()
 remote.destroy()
-assert not manager.marios and not base.taskMgr.hasTaskNamed(SM64Manager.SM64Manager.TaskName)
+assert not manager.marios and base.taskMgr.hasTaskNamed(SM64Manager.SM64Manager.TaskName)  # lingering
+assert base.taskMgr.hasTaskNamed(SM64Manager.SM64Manager.TickStopTaskName)
+assert manager.playSound(SM64Bindings.SOUND_MENU_CLICK_FILE_SELECT)
+assert lib.stub_last_sound() == SM64Bindings.SOUND_MENU_CLICK_FILE_SELECT
+manager._SM64Manager__tickStopTask(None)
+assert not base.taskMgr.hasTaskNamed(SM64Manager.SM64Manager.TaskName)
+base.taskMgr.remove(SM64Manager.SM64Manager.TickStopTaskName)
 
 # Magic word registration + DC fields
 from toontown.spellbook import MagicWordIndex

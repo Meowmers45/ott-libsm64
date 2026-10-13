@@ -49,6 +49,7 @@ class LocalMarioController(DirectObject):
         self.manager = manager
         self.controlling = False
         self.restoreSmartCamera = False
+        self.floorRayActive = False
         self.steerHeading = None
         self.shownLaff = None
         self.lastSentTick = -1
@@ -124,7 +125,28 @@ class LocalMarioController(DirectObject):
         self.restoreSmartCamera = bool(getattr(toon, '_smartCamEnabled', False))
         if self.restoreSmartCamera:
             toon.stopUpdateSmartCamera()
+        self.__startFloorRay()
         self.__placeCamera()
+
+    # Streets load/unload their segments from the 'on-floor' events of the Toon's floor ray, which the
+    # smart camera normally drives. With it paused, we traverse that ray over Mario ourselves.
+    def __startFloorRay(self):
+        toon = self.toon
+        if not hasattr(toon, 'ccTravOnFloor'):
+            return
+        toon.putCameraFloorRayOnAvatar()
+        toon.ccTravOnFloor.addCollider(toon.ccRay2NodePath, toon.camFloorCollisionBroadcaster)
+        self.floorRayActive = True
+
+    def __stopFloorRay(self):
+        toon = self.toon
+        if self.floorRayActive and toon is not None and not toon.isEmpty() and hasattr(toon, 'ccTravOnFloor'):
+            toon.ccTravOnFloor.removeCollider(toon.ccRay2NodePath)
+        self.floorRayActive = False
+
+    def __traverseFloorRay(self):
+        if self.floorRayActive:
+            self.toon.ccTravOnFloor.traverse(builtins.render)
 
     def __placeCamera(self):
         toon = self.toon
@@ -142,6 +164,7 @@ class LocalMarioController(DirectObject):
         self.__restoreTypeToChat()
         self.__restoreLaffMeter()
         toon = self.toon
+        self.__stopFloorRay()
         if self.restoreSmartCamera and toon is not None and not toon.isEmpty() and not toon._smartCamEnabled:
             toon.startUpdateSmartCamera()
         self.restoreSmartCamera = False
@@ -210,6 +233,7 @@ class LocalMarioController(DirectObject):
         diff = (mario.getHeading() - currentHeading + 180.0) % 360.0 - 180.0
         toon.setH(render, currentHeading + diff * min(1.0, CAMERA_FOLLOW_RATE * dt))
         self.__placeCamera()
+        self.__traverseFloorRay()
         self.__updateLaffMeter()
         self.manager.recenterIfNeeded(marioPos)
 

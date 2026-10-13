@@ -94,3 +94,8 @@ static int g_audioInit = 0;
 void sm64_audio_init(const uint8_t *rom) { g_audioInit = 1; }
 uint32_t sm64_audio_tick(uint32_t queued, uint32_t desired, int16_t *buf) { if (!g_audioInit) return 0; uint32_t n = queued < desired ? 544 : 528; memset(buf, 0, n * 2 * 2 * sizeof(int16_t)); return n; }
 void sm64_set_sound_volume(float v) {}
+static int32_t g_lastSound = 0;
+static int g_soundCount = 0;
+void sm64_play_sound_global(int32_t bits) { g_lastSound = bits; g_soundCount++; }
+int32_t stub_last_sound(void) { return g_lastSound; }
+int stub_sound_count(void) { return g_soundCount; }
