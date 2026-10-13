@@ -342,6 +342,16 @@ assert not mario3.isEmoting() and mario3.state.action == SM64Bindings.ACT_IDLE
 mario3.playEmote(4)  # Sleepy -> real SM64 nap
 mario3.tick()
 assert mario3.state.action == SM64Bindings.ACT_START_SLEEPING
+# victory: star dance + "Here we go!" when Mario returns from a won battle
+mario3.setControllerInput(0, 0, False, False, False)
+soundsBefore = lib.stub_sound_count()
+mario3.playVictoryDance()
+mario3.tick()
+assert mario3.state.action == SM64Bindings.ACT_UNINITIALIZED and mario3.state.animID == SM64Bindings.MARIO_ANIM_STAR_DANCE
+assert lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_HERE_WE_GO and lib.stub_sound_count() == soundsBefore + 1
+for _ in range(SM64Mario.VictoryTicks):
+    mario3.tick()
+assert not mario3.isEmoting() and mario3.state.action == SM64Bindings.ACT_IDLE
 mario3.destroy()
 
 print('ALL SM64 PORT CHECKS PASSED')

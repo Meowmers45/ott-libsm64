@@ -156,13 +156,25 @@ class SM64Mario(NodePath):
         if emoteIndex == self.EmoteSleepIndex:
             self.lib.sm64_set_mario_action(self.marioId, SM64Bindings.ACT_START_SLEEPING)
             return
-        animId = self.EmoteAnims.get(emoteIndex, 39)
+        self.playAnimation(self.EmoteAnims.get(emoteIndex, 39), self.EmoteTicks)
+
+    def playAnimation(self, animId, ticks):
+        # Freeze Mario on the no-op action and play an SM64 animation for `ticks` (cancelled by input)
+        if self.marioId < 0:
+            return
         self.lib.sm64_set_mario_velocity(self.marioId, 0, 0, 0)
         self.lib.sm64_set_mario_forward_velocity(self.marioId, 0)
         self.lib.sm64_set_mario_action(self.marioId, SM64Bindings.ACT_UNINITIALIZED)
         self.lib.sm64_set_mario_animation(self.marioId, animId)
         self.lib.sm64_set_mario_anim_frame(self.marioId, 0)
-        self.emoteEndTick = self.tickCount + self.EmoteTicks
+        self.emoteEndTick = self.tickCount + ticks
+
+    VictoryTicks = 90
+
+    def playVictoryDance(self):
+        # Star-dance + "Here we go!" when Mario comes back from a won battle
+        self.playAnimation(SM64Bindings.MARIO_ANIM_STAR_DANCE, self.VictoryTicks)
+        self.manager.playSound(SM64Bindings.SOUND_MARIO_HERE_WE_GO)
 
     def isEmoting(self):
         return self.emoteEndTick is not None

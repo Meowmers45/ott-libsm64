@@ -188,6 +188,9 @@ class DistributedBattle(DistributedBattleBase.DistributedBattleBase):
         self.accept('resumeAfterReward', self.handleResumeAfterReward)
         if self.interactiveProp:
             self.interactiveProp.gotoVictory()
+        if self.hasLocalToon() and getattr(base.localAvatar, 'marioSuspended', False):
+            # Mario was parked for this battle and the Toons won: he celebrates when he comes back
+            base.localAvatar.marioVictoryPending = True
         self.playReward(ts)
 
     def playReward(self, ts):

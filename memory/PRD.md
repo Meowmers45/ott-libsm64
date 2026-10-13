@@ -141,6 +141,11 @@ source in /app so the player can switch between Mario and their Toon.
 - Nametag: DistributedToon.getMarioDisplayName appends "\n\1red\1(Playing As Mario)\2" (TTLocalizer.SM64PlayingAsMario)
   through setDisplayName; refreshed in hideToonForMario/showToonAfterMario
 
+## Iteration 21 (June 2026)
+- Victory pose: DistributedBattle.enterReward sets localAvatar.marioVictoryPending when Mario was suspended for the
+  battle; LocalToon.resumeMarioMode then calls SM64Mario.playVictoryDance (MARIO_ANIM_STAR_DANCE 0xCD on the no-op
+  action for 90 ticks via new playAnimation helper + SOUND_MARIO_HERE_WE_GO) and whispers "Here we go!"
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
