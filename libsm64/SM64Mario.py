@@ -169,17 +169,35 @@ class SM64Mario(NodePath):
         self.lib.sm64_set_mario_anim_frame(self.marioId, 0)
         self.emoteEndTick = self.tickCount + ticks
 
+    # Battle reactions (also broadcast via setMarioReaction so other clients hear them)
+    ReactionVictory = 1
+    ReactionDefeat = 2
+    Reactions = {ReactionVictory: (SM64Bindings.MARIO_ANIM_STAR_DANCE, SM64Bindings.SOUND_MARIO_HERE_WE_GO),
+                 ReactionDefeat: (SM64Bindings.MARIO_ANIM_COUGHING, SM64Bindings.SOUND_MARIO_MAMA_MIA)}
     VictoryTicks = 90
 
+    def playReaction(self, kind):
+        # Local Mario: animation (streamed to remotes through the net state) + voice line
+        reaction = self.Reactions.get(kind)
+        if reaction is None:
+            return False
+        self.playAnimation(reaction[0], self.VictoryTicks)
+        self.manager.playSound(reaction[1])
+        return True
+
+    def playReactionSound(self, kind):
+        # Remote Mario: the pose already arrives with the net state, only the voice line is missing
+        reaction = self.Reactions.get(kind)
+        if reaction is None:
+            return False
+        self.manager.playSound(reaction[1])
+        return True
+
     def playVictoryDance(self):
-        # Star-dance + "Here we go!" when Mario comes back from a won battle
-        self.playAnimation(SM64Bindings.MARIO_ANIM_STAR_DANCE, self.VictoryTicks)
-        self.manager.playSound(SM64Bindings.SOUND_MARIO_HERE_WE_GO)
+        self.playReaction(self.ReactionVictory)
 
     def playDefeatSlump(self):
-        # Hunched slump + "Mamma mia!" when Mario comes back after a lost battle
-        self.playAnimation(SM64Bindings.MARIO_ANIM_COUGHING, self.VictoryTicks)
-        self.manager.playSound(SM64Bindings.SOUND_MARIO_MAMA_MIA)
+        self.playReaction(self.ReactionDefeat)
 
     def isEmoting(self):
         return self.emoteEndTick is not None

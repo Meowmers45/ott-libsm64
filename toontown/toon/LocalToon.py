@@ -340,9 +340,11 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
             return
         if victory and self.mario is not None:
             self.mario.playVictoryDance()
+            self.d_setMarioReaction(self.mario.ReactionVictory)
             self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioHereWeGo, WhisperPopup.WTSystem)
         elif defeat and self.mario is not None:
             self.mario.playDefeatSlump()
+            self.d_setMarioReaction(self.mario.ReactionDefeat)
             self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioMammaMia, WhisperPopup.WTSystem)
         else:
             self.setSystemMessage(0, 'Spellbook: ' + TTLocalizer.SM64MarioBack, WhisperPopup.WTSystem)
@@ -428,6 +430,9 @@ class LocalToon(DistributedToon.DistributedToon, LocalAvatar.LocalAvatar):
 
     def d_setMarioState(self, *args):
         self.sendUpdate('setMarioState', list(args))
+
+    def d_setMarioReaction(self, kind):
+        self.sendUpdate('setMarioReaction', [kind])
 
     def applyMarioMode(self):
         self.__applyMarioMode()

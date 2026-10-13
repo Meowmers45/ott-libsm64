@@ -345,6 +345,11 @@ class DistributedToon(DistributedPlayer.DistributedPlayer, Toon.Toon, Distribute
             self.mario.setNetState(action, animID, animFrame, faceAngle, forwardVel, velX, velY, velZ, stickX, stickY,
                                    buttons, flags)
 
+    def setMarioReaction(self, kind):
+        # Another player's Mario came back from a battle: play the matching voice line (pose comes via setMarioState)
+        if self.mario is not None and not self.mario.isLocal and self.mario.isValid():
+            self.mario.playReactionSound(kind)
+
     def _handleClientCleanup(self):
         if self.track != None:
             DelayDelete.cleanupDelayDeletes(self.track)

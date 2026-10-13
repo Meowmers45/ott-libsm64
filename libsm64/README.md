@@ -113,7 +113,7 @@ client simulates them.
   pound - any SM64 attacking action); the Cog puffs dust and SM64's "bonk" plays the instant the hit lands.
   Plain bumps and Cogs walking into Mario do nothing, so he can dodge. Mario is parked for the battle and
   returns once you are walking again - after a won battle with his star dance and "Here we go!", after a
-  lost one with a slump and "Mamma mia!".
+  lost one with a slump and "Mamma mia!". Other players see and hear the same reaction on your Mario.
 * The Mario/Toon button next to the laff meter plays SM64's menu "click"; the audio stream lingers
   `sm64-audio-linger` seconds (1.5) after Mario leaves so exit sounds finish.
 * Everyone sees "(Playing As Mario)" in red under your name on the nametag while Mario is in play.

@@ -315,6 +315,7 @@ assert 'mario' in MagicWordIndex.magicWordIndex and 'toon' in MagicWordIndex.mag
 dc = open('etc/toon.dc').read()
 assert 'setMarioMode(uint8) broadcast ram ownsend;' in dc
 assert 'setMarioState(uint32, int32, int16, int16/1000, int16/10, int16/10, int16/10, int16/10, int8/100, int8/100, uint8, uint32) broadcast ownsend;' in dc
+assert 'setMarioReaction(uint8) broadcast ownsend;' in dc
 
 # audio plumbing (null audio manager in this headless run)
 assert manager.audioEnabled, 'audio should initialise with the stub'
@@ -358,5 +359,18 @@ mario3.tick()
 assert mario3.state.action == SM64Bindings.ACT_UNINITIALIZED and mario3.state.animID == SM64Bindings.MARIO_ANIM_COUGHING
 assert lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_MAMA_MIA
 mario3.destroy()
+# remote reactions: the pose streams through the net state (action no-op + animID), the voice line via setMarioReaction
+remoteNode = base.render.attachNewNode('remote-reaction')
+remoteNode.setPos(0, 0, 2)
+remote2 = SM64Mario(manager, Point3(0, 0, 2), isLocal=False)
+remote2.setFollowNode(remoteNode)
+remote2.setNetState(SM64Bindings.ACT_UNINITIALIZED, SM64Bindings.MARIO_ANIM_STAR_DANCE, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0)
+remote2.tick()
+assert remote2.state.action == SM64Bindings.ACT_UNINITIALIZED and remote2.state.animID == SM64Bindings.MARIO_ANIM_STAR_DANCE
+assert remote2.playReactionSound(SM64Mario.ReactionVictory) and lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_HERE_WE_GO
+assert remote2.playReactionSound(SM64Mario.ReactionDefeat) and lib.stub_last_sound() == SM64Bindings.SOUND_MARIO_MAMA_MIA
+assert not remote2.playReactionSound(7)
+remote2.destroy()
+remoteNode.removeNode()
 
 print('ALL SM64 PORT CHECKS PASSED')

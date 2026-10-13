@@ -150,6 +150,11 @@ source in /app so the player can switch between Mario and their Toon.
 - Defeat pose: Place.enterDied sets marioDefeatPending when Mario was suspended; resumeMarioMode calls
   SM64Mario.playDefeatSlump (MARIO_ANIM_COUGHING 0x30 hunched slump + SOUND_MARIO_MAMA_MIA) and whispers "Mamma mia!"
 
+## Iteration 23 (June 2026)
+- Remote reactions: new DC field setMarioReaction(uint8) broadcast ownsend (1 victory, 2 defeat). LocalToon sends it
+  with the local reaction; DistributedToon.setMarioReaction -> SM64Mario.playReactionSound on remote Marios (pose
+  itself already streams via setMarioState: ACT_UNINITIALIZED + animID). SM64Mario.Reactions table + playReaction.
+
 ## Backlog
 - P1: in-game validation by user (shader colours, nametag height, camera feel, turning feel, audio latency)
 - P2: dynamic surfaces for elevators/moving platforms; Mario attacks interacting with cogs; mesh for toons without libsm64
